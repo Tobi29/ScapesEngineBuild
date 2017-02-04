@@ -75,6 +75,10 @@ open class AppBundlerTask : DefaultTask() {
     fun classpath() = classpath.invoke() ?: throw IllegalStateException(
             "No classpath given")
 
+    init {
+        dependsOn({ _: Any? -> classpath().buildDependencies }.toClosure())
+    }
+
     @TaskAction
     @Suppress("unused")
     fun run() {
