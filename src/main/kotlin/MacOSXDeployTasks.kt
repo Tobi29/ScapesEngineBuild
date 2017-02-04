@@ -76,7 +76,8 @@ open class AppBundlerTask : DefaultTask() {
             "No classpath given")
 
     init {
-        dependsOn({ _: Any? -> classpath().buildDependencies }.toClosure())
+        // Cannot use _ because Gradle Script Kotlin does not yet support it
+        dependsOn({ i: Any? -> classpath().buildDependencies }.toClosure())
     }
 
     @TaskAction
