@@ -25,28 +25,28 @@ Note: Windows deployment can take a long time due to compression, edit
 ### MacOSX
   * Unix environment highly recommended
   * Download a MacOSX (64bit, tar.gz version) JRE (Oracle JRE recommended)
-  * Place the unextracted archive into `ScapesEngine/resources/JRE/MacOSX/`
+  * Place the unextracted archive into `buildSrc/resources/JRE/MacOSX/`
   * Run `tasks` target to check if `deployMacOSX` is available
 
 ### Windows
   * Download a Windows (32bit + 64bit, tar.gz version)
     JRE (Oracle JRE recommended)
-  * Place the unextracted archive into `ScapesEngine/resources/JRE/Windows/32`
-    and `ScapesEngine/resources/JRE/Windows/64` respectively
+  * Place the unextracted archive into `buildSrc/resources/JRE/Windows/32`
+    and `buildSrc/resources/JRE/Windows/64` respectively
   * Download Launch4j for your platform
-  * Place the extracted archives into `ScapesEngine/resources/Launch4j`
-    (Make sure the jar is in `ScapesEngine/resources/Launch4j/launch4j.jar`!)
+  * Place the extracted archives into `buildSrc/resources/Launch4j`
+    (Make sure the jar is in `buildSrc/resources/Launch4j/launch4j.jar`!)
   * Download Inno Setup (Unicode version recommended)
   * Windows only:
     * Run the installer and install everything into
-      `ScapesEngine/resources/Inno Setup 5` (Make sure the compiler is in
-      `ScapesEngine/resources/Inno Setup 5/ISCC.exe`!)
+      `buildSrc/resources/Inno Setup 5` (Make sure the compiler is in
+      `buildSrc/resources/Inno Setup 5/ISCC.exe`!)
   * Non-Windows only:
     * Install Wine for your system (Running `wine --version` in the terminal has
       to work, as depends on that command to be set up)
     * Run the Inno Setup installer
-    * Copy the `Inno Setup 5` directory to `ScapesEngine/resources/Inno Setup 5`
+    * Copy the `Inno Setup 5` directory to `buildSrc/resources/Inno Setup 5`
       (Make sure the compiler is in
-      `ScapesEngine/resources/Inno Setup 5/ISCC.exe`!)
+      `buildSrc/resources/Inno Setup 5/ISCC.exe`!)
     * Make sure to have a working Wine prefix when building
   * Run `tasks` target to check if `deployWindows` is available

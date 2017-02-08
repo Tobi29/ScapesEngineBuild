@@ -2,3 +2,6 @@
 .idea
 build
 *.iml
+resources/Inno Setup 5
+resources/JRE
+resources/Launch4j

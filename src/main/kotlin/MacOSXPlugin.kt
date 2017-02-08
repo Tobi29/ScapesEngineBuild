@@ -103,7 +103,7 @@ fun Project.macOSXBundleTask(jars: Ref<FileCollection>,
     task.copyright = Ref { config.copyright.resolveToString() }
     task.mainClass = Ref { config.mainClass.resolveToString() }
     task.appbundler = Ref {
-        rootProject.file("ScapesEngine/resources/appbundler-1.0ea.jar")
+        rootProject.file("buildSrc/resources/appbundler-1.0ea.jar")
     }
     task.jre = jre
     task.icon = Ref { file("project/Icon.icns") }

@@ -59,7 +59,7 @@ fun Project.jreTask(name: String,
 
 fun Project.getJRE(platform: String): File? {
     val jres = rootProject.file(
-            "ScapesEngine/resources/JRE/$platform").listFiles(
+            "buildSrc/resources/JRE/$platform").listFiles(
             FileFilter { !it.isDirectory && !it.isHidden })
     if (jres == null || jres.isEmpty()) {
         return null

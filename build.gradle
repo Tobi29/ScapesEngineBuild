@@ -17,6 +17,8 @@
 import org.gradle.script.lang.kotlin.KotlinDependencyExtensionsKt as gsk
 import org.gradle.script.lang.kotlin.ProjectExtensionsKt as gskp
 
+apply plugin: "idea"
+
 buildscript {
     dependencies {
         //noinspection DifferentKotlinGradleVersion
@@ -34,3 +36,11 @@ dependencies {
 }
 
 gsk.gradleScriptKotlin(repositories)
+
+idea {
+    module {
+        excludeDirs += file("resources/Inno Setup 5")
+        excludeDirs += file("resources/JRE")
+        excludeDirs += file("resources/Launch4j")
+    }
+}

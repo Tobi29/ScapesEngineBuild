@@ -142,7 +142,7 @@ fun Project.windowsProgramTask(cmd: Boolean,
     task.copyright = Ref { "${config.copyright}" }
     task.mainClass = Ref { "${config.mainClass}" }
     task.launch4j = Ref {
-        file("$rootDir/ScapesEngine/resources/Launch4j/launch4j.jar")
+        file("$rootDir/buildSrc/resources/Launch4j/launch4j.jar")
     }
     task.icon = Ref { file("project/Icon.ico") }
     task.exeMemoryMin = Ref { 64 }
@@ -150,7 +150,7 @@ fun Project.windowsProgramTask(cmd: Boolean,
     task.exeType = Ref { if (cmd) "console" else "gui" }
     task.runInAppData = Ref { !cmd }
     task.manifest = Ref {
-        file("$rootDir/ScapesEngine/resources/Program.manifest")
+        file("$rootDir/buildSrc/resources/Program.manifest")
     }
     task.output = Ref { File(task.temporaryDir, exeName()) }
     return task
@@ -165,7 +165,7 @@ fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
                                jre64: Ref<File>,
                                taskName: String): Copy {
     val task = tasks.create(taskName, Copy::class.java)
-    task.from(rootProject.file("ScapesEngine/resources/Setup.iss"))
+    task.from(rootProject.file("buildSrc/resources/Setup.iss"))
     task.from(file("project/installer"))
     task.from(jars.toClosure()) {
         it.into("install/common/lib")
@@ -215,7 +215,7 @@ fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
         it.into("install/64/jre")
     }
     task.from(rootProject.file(
-            "ScapesEngine/resources/Install/Windows")) { it.into("install") }
+            "buildSrc/resources/Install/Windows")) { it.into("install") }
     task.into(task.temporaryDir)
     return task
 }
@@ -226,7 +226,7 @@ fun Project.windowsPackTask(dir: Ref<File>,
 
     val task = tasks.create(taskName, Exec::class.java)
     val innoEXE = rootProject.
-            file("ScapesEngine/resources/Inno Setup 5/ISCC.exe").absolutePath
+            file("buildSrc/resources/Inno Setup 5/ISCC.exe").absolutePath
     val innoArgs = arrayOf(Ref {
         "/DApplicationFullName=${config.fullName.resolveToString()}"
     }, Ref {
