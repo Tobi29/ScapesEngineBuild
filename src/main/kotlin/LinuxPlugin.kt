@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Copyright 2012-2017 Tobi29
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -63,13 +47,24 @@ open class ScapesEngineApplicationLinux : Plugin<Project> {
             target.configurations.getByName("nativesLinux64")
         }, config)
 
+        // Fat jar tasks
+        val fatJarLinux32Task = target.addShadowTask("Linux32",
+                "fatJarLinux32")
+        val fatJarLinux64Task = target.addShadowTask("Linux64",
+                "fatJarLinux64")
+
         // Full deploy task
-        val deployTask = target.tasks.getByName("deploy")
-        if (deployLinuxTask32 != null) {
-            deployTask.dependsOn(deployLinuxTask32)
+        target.tasks.findByName("deploy")?.let { deployTask ->
+            if (deployLinuxTask32 != null) {
+                deployTask.dependsOn(deployLinuxTask32)
+            }
+            if (deployLinuxTask64 != null) {
+                deployTask.dependsOn(deployLinuxTask64)
+            }
         }
-        if (deployLinuxTask64 != null) {
-            deployTask.dependsOn(deployLinuxTask64)
+        target.tasks.findByName("fatJar")?.let { fatJarTask ->
+            fatJarTask.dependsOn(fatJarLinux32Task)
+            fatJarTask.dependsOn(fatJarLinux64Task)
         }
     }
 }
