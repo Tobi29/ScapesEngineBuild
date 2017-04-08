@@ -39,7 +39,7 @@ inline operator fun BuilderSupport.invoke(method: String,
 inline operator fun BuilderSupport.invoke(method: String,
                                           args: Map<String, String>,
                                           crossinline closure: BuilderSupport.() -> Unit): Any? = invokeMethod(
-        method, Arrays.asList(args, { closure(this) }.toClosure()))
+        method, listOf(args, { closure(this) }.toClosure()))
 
 inline fun argMap(block: MutableMap<String, String>.() -> Unit) = map(
         block)
