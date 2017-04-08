@@ -15,7 +15,6 @@
  */
 
 import org.gradle.script.lang.kotlin.KotlinDependencyExtensionsKt as gsk
-import org.gradle.script.lang.kotlin.ProjectExtensionsKt as gskp
 
 buildscript {
     dependencies {
