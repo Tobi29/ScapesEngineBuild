@@ -147,9 +147,6 @@ fun Project.linuxTarTask(libPath: Ref<File>,
                          name: Ref<String>,
                          taskName: String): Tar {
     val task = tasks.create(taskName, Tar::class.java)
-    afterEvaluate {
-        task.baseName = "$name-$distributionName"
-    }
     task.compression = Compression.GZIP
     task.from(jars.toClosure()) {
         it.into(libPath.toClosure())
