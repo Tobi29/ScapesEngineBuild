@@ -24,7 +24,6 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.bundling.Zip
 import java.io.File
-import java.util.*
 
 open class ScapesEngineApplicationWindows : Plugin<Project> {
     override fun apply(target: Project) {
@@ -66,117 +65,108 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
                                   jars64: Ref<FileCollection>,
                                   natives32: Ref<FileCollection>,
                                   natives64: Ref<FileCollection>,
-                                  config: ScapesEngineApplicationExtension): List<Task> {
+                                  application: ScapesEngineApplicationExtension): List<Task> {
     val deployTasks = ArrayList<Task>()
 
-    // JRE Task 64-Bit
-    val jreTask32 = jreTask("jreWindows32", "Windows/32")
-    if (jreTask32 == null) {
-        logger.warn("No 32-Bit JRE for Windows found!")
-    } else {
-        pruneJREWindows(jreTask32, "*")
+    val jdkVersion = Ref {
+        application.ojdkBuildVersion.resolveTo<Pair<String, String>>() ?: Pair(
+                "1.8.0.121-2", "1.8.0.121-2.b13")
     }
 
+    // JRE Task 32-Bit
+    val (jreTask32, jre32) = ojdkBuildWindows(jdkVersion, "32")
+
     // JRE Task 64-Bit
-    val jreTask64 = jreTask("jreWindows64", "Windows/64")
-    if (jreTask64 == null) {
-        logger.warn("No 64-Bit JRE for Windows found!")
-    } else {
-        pruneJREWindows(jreTask64, "*")
-    }
+    val (jreTask64, jre64) = ojdkBuildWindows(jdkVersion, "64")
 
     // Program task
-    val programTask = windowsProgramTask(false, Ref { "${config.name}.exe" },
-            config, "programWindows")
+    val programTask = windowsProgramTask(false,
+            Ref { "${application.name}.exe" }, application, "programWindows",
+            Ref { application.workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false })
 
     // Command task
     val programCmdTask = windowsProgramTask(true,
-            Ref { "${config.name}Cmd.exe" }, config, "programWindowsCmd")
+            Ref { "${application.name}Cmd.exe" }, application,
+            "programWindowsCmd",
+            Ref { application.workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false })
 
     // Zip tasks
-    if (jreTask32 != null) {
-        val deployWindowsZip32 = windowsZipTask("Windows32",
-                Ref { jars() + jars32() },
-                natives32,
-                Ref { files(programTask.output(), programCmdTask.output()) },
-                Ref { jreTask32.temporaryDir }, "deployWindowsZip32")
-        deployWindowsZip32.dependsOn(jreTask32)
-        deployWindowsZip32.dependsOn("jar")
-        deployWindowsZip32.dependsOn(programTask)
-        deployWindowsZip32.dependsOn(programCmdTask)
-        deployWindowsZip32.group = "Deployment"
-        deployWindowsZip32.description = "Zip for Windows with bundled JRE"
-        afterEvaluate {
-            deployWindowsZip32.baseName = "${config.name}-Windows32"
-        }
-        deployTasks.add(deployWindowsZip32)
+    val deployWindowsZip32 = windowsZipTask(Ref { jars() + jars32() },
+            natives32,
+            Ref { files(programTask.output(), programCmdTask.output()) },
+            jre32, "deployWindowsZip32")
+    deployWindowsZip32.dependsOn(jreTask32)
+    deployWindowsZip32.dependsOn("jar")
+    deployWindowsZip32.dependsOn(programTask)
+    deployWindowsZip32.dependsOn(programCmdTask)
+    deployWindowsZip32.group = "Deployment"
+    deployWindowsZip32.description = "Zip for Windows with bundled JRE"
+    afterEvaluate {
+        deployWindowsZip32.baseName = "${application.name}-Windows32"
     }
-    if (jreTask64 != null) {
-        val deployWindowsZip64 = windowsZipTask("Windows64",
-                Ref { jars() + jars64() },
-                natives64,
-                Ref { files(programTask.output(), programCmdTask.output()) },
-                Ref { jreTask64.temporaryDir }, "deployWindowsZip64")
-        deployWindowsZip64.dependsOn(jreTask64)
-        deployWindowsZip64.dependsOn("jar")
-        deployWindowsZip64.dependsOn(programTask)
-        deployWindowsZip64.dependsOn(programCmdTask)
-        deployWindowsZip64.group = "Deployment"
-        deployWindowsZip64.description = "Zip for Windows with bundled JRE"
-        afterEvaluate {
-            deployWindowsZip64.baseName = "${config.name}-Windows64"
-        }
-        deployTasks.add(deployWindowsZip64)
+    deployTasks.add(deployWindowsZip32)
+
+    val deployWindowsZip64 = windowsZipTask(Ref { jars() + jars64() },
+            natives64,
+            Ref { files(programTask.output(), programCmdTask.output()) },
+            jre64, "deployWindowsZip64")
+    deployWindowsZip64.dependsOn(jreTask64)
+    deployWindowsZip64.dependsOn("jar")
+    deployWindowsZip64.dependsOn(programTask)
+    deployWindowsZip64.dependsOn(programCmdTask)
+    deployWindowsZip64.group = "Deployment"
+    deployWindowsZip64.description = "Zip for Windows with bundled JRE"
+    afterEvaluate {
+        deployWindowsZip64.baseName = "${application.name}-Windows64"
+    }
+    deployTasks.add(deployWindowsZip64)
+
+    // Prepare task
+    val prepareTask = windowsPrepareTask(jars, jars32, jars64, natives32,
+            natives64, jre32, jre64, "prepareWindows")
+    prepareTask.dependsOn(jreTask32)
+    prepareTask.dependsOn(jreTask64)
+    prepareTask.dependsOn("jar")
+    prepareTask.dependsOn(programTask)
+    prepareTask.dependsOn(programCmdTask)
+    prepareTask.from({ programTask.output() }.toClosure()) {
+        it.into("install/common")
+    }
+    prepareTask.from({ programCmdTask.output() }.toClosure()) {
+        it.into("install/common")
     }
 
-    if (jreTask32 != null && jreTask64 != null) {
-        // Prepare task
-        val prepareTask = windowsPrepareTask(jars, jars32, jars64, natives32,
-                natives64, Ref { jreTask32.temporaryDir },
-                Ref { jreTask64.temporaryDir }, "prepareWindows")
-        prepareTask.dependsOn(jreTask32)
-        prepareTask.dependsOn(jreTask64)
-        prepareTask.dependsOn("jar")
-        prepareTask.dependsOn(programTask)
-        prepareTask.dependsOn(programCmdTask)
-        prepareTask.from({ programTask.output() }.toClosure()) {
-            it.into("install/common")
-        }
-        prepareTask.from({ programCmdTask.output() }.toClosure()) {
-            it.into("install/common")
-        }
-
-        val innoEXE = rootProject.file(
-                "buildSrc/resources/Inno Setup 5/ISCC.exe")
-        if (!innoEXE.exists()) {
-            logger.warn("No Inno Setup for Windows found!")
-            return deployTasks
-        }
-
-        // Pack task
-        val packTask = windowsPackTask(Ref { prepareTask.temporaryDir },
-                innoEXE, config, "packWindows")
-        packTask.dependsOn(prepareTask)
-
-        // Main task
-        val task = tasks.create("deployWindows", Copy::class.java)
-        task.dependsOn(packTask)
-        task.group = "Deployment"
-        task.description = "Windows Installer with bundled JRE"
-        task.from(File(prepareTask.temporaryDir, "output/setup.exe"))
-        task.rename({ str: String ->
-            "${config.name}-Setup-${project.version}.exe"
-        }.toClosure())
-        task.into(File(buildDir, "distributions"))
-        deployTasks.add(task)
+    val innoEXE = rootProject.file(
+            "buildSrc/resources/Inno Setup 5/ISCC.exe")
+    if (!innoEXE.exists()) {
+        logger.warn("No Inno Setup for Windows found!")
+        return deployTasks
     }
+
+    // Pack task
+    val packTask = windowsPackTask(Ref { prepareTask.temporaryDir },
+            innoEXE, application, "packWindows")
+    packTask.dependsOn(prepareTask)
+
+    // Main task
+    val task = tasks.create("deployWindows", Copy::class.java)
+    task.dependsOn(packTask)
+    task.group = "Deployment"
+    task.description = "Windows Installer with bundled JRE"
+    task.from(File(prepareTask.temporaryDir, "output/output.exe"))
+    task.rename({ str: String ->
+        "${application.name}-Setup-${project.version}.exe"
+    }.toClosure())
+    task.into(File(buildDir, "distributions"))
+    deployTasks.add(task)
     return deployTasks
 }
 
 fun Project.windowsProgramTask(cmd: Boolean,
                                exeName: Ref<String>,
                                config: ScapesEngineApplicationExtension,
-                               taskName: String): Launch4jTask {
+                               taskName: String,
+                               workingDirInLibrary: Ref<Boolean>): Launch4jTask {
     val task = tasks.create(taskName, Launch4jTask::class.java)
     task.fullName = Ref { "${config.fullName}" }
     task.version = Ref { "${config.version}" }
@@ -190,7 +180,7 @@ fun Project.windowsProgramTask(cmd: Boolean,
     task.exeMemoryMin = Ref { 64 }
     task.exeMemoryMax = Ref { 2048 }
     task.exeType = Ref { if (cmd) "console" else "gui" }
-    task.runInAppData = Ref { !cmd }
+    task.runInAppData = workingDirInLibrary
     task.manifest = Ref {
         file("$rootDir/buildSrc/resources/Program.manifest")
     }
@@ -218,33 +208,13 @@ fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
     task.from(jars64.toClosure()) {
         it.into("install/64/lib")
     }
-    task.from({
-        natives32().asSequence().map<File, Any> {
-            if (it.name.endsWith(".jar")) {
-                zipTree(it).files.asSequence().filter {
-                    it.isFile && it.name.matches(dllRegex)
-                }.toList()
-            } else {
-                it
-            }
-        }.toList()
-    }.toClosure()) {
+    task.from({ fetchNativesWindows(natives32()) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, "install", "32", fcp.name)
             fcp.mode = 493 // 755
         }
     }
-    task.from({
-        natives64().asSequence().map<File, Any> {
-            if (it.name.endsWith(".jar")) {
-                zipTree(it).files.asSequence().filter {
-                    it.isFile && it.name.matches(dllRegex)
-                }.toList()
-            } else {
-                it
-            }
-        }.toList()
-    }.toClosure()) {
+    task.from({ fetchNativesWindows(natives64()) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, "install", "64", fcp.name)
             fcp.mode = 493 // 755
@@ -262,25 +232,14 @@ fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
     return task
 }
 
-fun Project.windowsZipTask(distributionName: String,
-                           jars: Ref<FileCollection>,
+fun Project.windowsZipTask(jars: Ref<FileCollection>,
                            natives: Ref<FileCollection>,
                            exes: Ref<FileCollection>,
                            jre: Ref<File>,
                            taskName: String): Zip {
     val task = tasks.create(taskName, Zip::class.java)
     task.from(jars.toClosure()) { it.into("lib") }
-    task.from({
-        natives().asSequence().map<File, Any> {
-            if (it.name.endsWith(".jar")) {
-                zipTree(it).files.asSequence().filter {
-                    it.isFile && it.name.matches(dllRegex)
-                }.toList()
-            } else {
-                it
-            }
-        }.toList()
-    }.toClosure()) {
+    task.from({ fetchNativesWindows(natives()) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, fcp.name)
             fcp.mode = 493 // 755
@@ -321,5 +280,3 @@ fun Project.windowsPackTask(dir: Ref<File>,
     }
     return task
 }
-
-private val dllRegex = "(.+)\\.dll".toRegex()

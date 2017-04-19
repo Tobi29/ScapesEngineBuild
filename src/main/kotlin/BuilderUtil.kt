@@ -17,7 +17,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
 import groovy.util.BuilderSupport
-import java.util.*
 
 inline operator fun BuilderSupport.invoke(method: String,
                                           block: MutableMap<String, String>.() -> Unit) = invoke(

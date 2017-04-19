@@ -30,8 +30,25 @@ open class ScapesEngineApplicationExtension {
     @Input
     var copyright: Any? = null
     @Input
+    var category: Any? = ApplicationType.UTILITY
+    @Input
     var uuid: Any? = null
     @Input
     var mainClass: Any? = null
+    @Input
+    var workingDirectoryInLibrary: Any? = null
+    @Input
+    var adoptOpenJDKVersion: Any? = null
+    @Input
+    var ojdkBuildVersion: Any? = null
 }
 
+enum class ApplicationType {
+    DEVELOPMENT,
+    GAME,
+    GRAPHICS,
+    INTERNET,
+    MULTIMEDIA,
+    OFFICE,
+    UTILITY
+}

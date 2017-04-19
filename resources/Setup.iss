@@ -18,7 +18,7 @@ DefaultGroupName={#ApplicationFullName}
 MinVersion=6.0
 
 OutputDir=output
-OutputBaseFilename=setup
+OutputBaseFilename=output
 Compression=lzma2/ultra64
 SolidCompression=yes
 AllowNoIcons=yes

@@ -115,8 +115,8 @@ open class Launch4jTask : DefaultTask() {
                     }) {
                         if (runInAppData) {
                             invoke("opt", "-Duser.dir=\"%APPDATA%\\$fullName\"")
-                            invoke("opt", "-Djava.library.path=\"%EXEDIR%\"")
                         }
+                        invoke("opt", "-Djava.library.path=\"%EXEDIR%\"")
                     }
                     invoke("versioninfo") {
                         put("fileversion", winVersion)

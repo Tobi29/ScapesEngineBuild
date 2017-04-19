@@ -107,21 +107,24 @@ fun Project.addDeployLinuxTask(arch: String,
 }
 
 fun Project.linuxScriptTask(libPath: Ref<File>,
-                            config: ScapesEngineApplicationExtension,
+                            application: ScapesEngineApplicationExtension,
                             taskName: String): StartupScriptTask {
     return linuxScriptTask(libPath,
-            Ref { config.name.resolveToString().toLowerCase() },
-            Ref { config.mainClass.resolveToString() }, taskName)
+            Ref { application.name.resolveToString().toLowerCase() },
+            Ref { application.mainClass.resolveToString() }, taskName,
+            Ref { application.workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false })
 }
 
 fun Project.linuxScriptTask(libPath: Ref<File>,
                             execName: Ref<String>,
                             mainClass: Ref<String>,
-                            taskName: String): StartupScriptTask {
+                            taskName: String,
+                            workingDirInLibrary: Ref<Boolean>): StartupScriptTask {
     val task = tasks.create(taskName, StartupScriptTask::class.java)
     task.execName = execName
     task.libPath = libPath
     task.mainClass = mainClass
+    task.workingDirInLibrary = workingDirInLibrary
     task.output = Ref { File(task.temporaryDir, execName()) }
     return task
 }
@@ -151,17 +154,7 @@ fun Project.linuxTarTask(libPath: Ref<File>,
     task.from(jars.toClosure()) {
         it.into(libPath.toClosure())
     }
-    task.from({
-        natives().asSequence().map<File, Any> {
-            if (it.name.endsWith(".jar")) {
-                zipTree(it).files.asSequence().filter {
-                    it.isFile && it.name.matches(soRegex)
-                }.toList()
-            } else {
-                it
-            }
-        }.toList()
-    }.toClosure()) {
+    task.from({ fetchNativesLinux(natives()) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, libPath.toString(), fcp.name)
             fcp.mode = 493 // 755
@@ -169,5 +162,3 @@ fun Project.linuxTarTask(libPath: Ref<File>,
     }
     return task
 }
-
-private val soRegex = "(.+)\\.so(.[0-9]+)?".toRegex()

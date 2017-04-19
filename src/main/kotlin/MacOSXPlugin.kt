@@ -20,10 +20,9 @@ import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
-import java.io.File
+import org.gradle.script.lang.kotlin.task
 
 open class ScapesEngineApplicationMacOSX : Plugin<Project> {
     @Suppress("ReplaceSingleLineLet")
@@ -57,89 +56,84 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
 fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
                                 natives: Ref<FileCollection>,
                                 application: ScapesEngineApplicationExtension): Task? {
-    // JRE Task
-    val jreTask = jreTask("jreMacOSX", "MacOSX")
-    if (jreTask == null) {
-        logger.warn("No JRE for Mac OS X found!")
-        return null
+    // JRE task
+    val (jreTask, jre) = adoptOpenJDKMacOSX(
+            Ref { application.adoptOpenJDKVersion.resolveTo<String?>() ?: "jdk8u152-b01" })
+
+    // App plist task
+    val appPListTask = task<AppPListTask>("appPListMacOSX") {
+        plist = Ref { application.generatePList() }
     }
-    pruneJREMacOSX(jreTask, "*/Contents/Home")
 
-    // Bundle task
-    val bundleTask = macOSXBundleTask(jars, Ref { jreTask.temporaryDir },
-            application, "bundleMacOSX")
-    bundleTask.dependsOn(jreTask)
-    bundleTask.dependsOn("jar")
+    // JRE plist task
+    val jrePListTask = task<JREPListTask>("jrePListMacOSX") {
+        plist = Ref { adoptOpenJDKPList("jdk8u152-b01") }
+    }
 
-    // Natives task
-    val nativesTask = macOSXNativesTask(natives, Ref { bundleTask.output() },
-            "nativesMacOSX")
-    nativesTask.dependsOn(bundleTask)
 
     // Main task
-    val task = macOSXTarTask("MacOSX", Ref { bundleTask.output().parentFile },
-            application, "deployMacOSX")
+    val task = task<Tar>("deployMacOSX") {
+        compression = Compression.GZIP
+        val bundle = Ref { "${application.fullName}.app" }
+        val contents = Ref { "$bundle/Contents" }
+        val javaDir = Ref { "$contents/Java" }
+        val macOSDir = Ref { "$contents/MacOS" }
+        val plugInsDir = Ref { "$contents/PlugIns" }
+        val resourcesDir = Ref { "$contents/Resources" }
+
+        from(jars.toClosure()) { it.into(javaDir.toClosure()) }
+        from(jre.toClosure()) {
+            it.into({ "$plugInsDir/JRE.jre/Contents/Home" }.toClosure())
+        }
+        // There seems to be no way to add symlinks to tars with gradle
+        // So we just copy the library (It is only 72 KiB)
+        from(jre.toClosure()) {
+            it.include("lib/jli/libjli.dylib")
+            it.eachFile { fcp: FileCopyDetails ->
+                fcp.relativePath = RelativePath(true, plugInsDir(), "JRE.jre",
+                        "Contents", "MacOS", "libjli.dylib")
+                fcp.mode = 493 // 755
+            }
+            it.includeEmptyDirs = false
+        }
+        from(jrePListTask.plistFile()) {
+            it.into({ "$plugInsDir/JRE.jre/Contents" }.toClosure())
+        }
+        from({ fetchNativesMacOSX(natives()) }.toClosure()) {
+            it.eachFile { fcp: FileCopyDetails ->
+                fcp.relativePath = RelativePath(true, macOSDir(), fcp.name)
+                fcp.mode = 493 // 755
+            }
+            it.includeEmptyDirs = false
+        }
+        from({
+            rootProject.files("buildSrc/resources/AppBundler/JavaAppLauncher")
+        }.toClosure()) {
+            it.eachFile { fcp: FileCopyDetails ->
+                fcp.relativePath = RelativePath(true, macOSDir(),
+                        application.name.toString())
+                fcp.mode = 493 // 755
+            }
+            it.includeEmptyDirs = false
+        }
+        from({
+            files("project/Icon.icns") +
+                    rootProject.files("buildSrc/resources/AppBundler/Resources")
+        }.toClosure()) {
+            it.into(resourcesDir.toClosure())
+        }
+        from({
+            files(appPListTask.plistFile(), appPListTask.pkgFile())
+        }.toClosure()) {
+            it.into(contents.toClosure())
+        }
+    }
     task.description =
             "Mac OS X Application containing necessary files to run the game"
     task.group = "Deployment"
-    task.dependsOn(nativesTask)
+    task.dependsOn(jreTask)
+    task.dependsOn(appPListTask)
+    task.dependsOn(jrePListTask)
+    task.dependsOn("jar")
     return task
 }
-
-fun Project.macOSXBundleTask(jars: Ref<FileCollection>,
-                             jre: Ref<File>,
-                             config: ScapesEngineApplicationExtension,
-                             taskName: String): AppBundlerTask {
-    val task = tasks.create(taskName, AppBundlerTask::class.java)
-    task.fullName = Ref { config.fullName.resolveToString() }
-    task.version = Ref { config.version.resolveToString() }
-    task.copyright = Ref { config.copyright.resolveToString() }
-    task.mainClass = Ref { config.mainClass.resolveToString() }
-    task.appbundler = Ref {
-        rootProject.file("buildSrc/resources/appbundler-1.0ea.jar")
-    }
-    task.jre = jre
-    task.icon = Ref { file("project/Icon.icns") }
-    task.classpath = jars
-    task.output = Ref { File(task.temporaryDir, "${config.fullName}.app") }
-    return task
-}
-
-fun Project.macOSXNativesTask(natives: Ref<FileCollection>,
-                              bundle: Ref<File>,
-                              taskName: String): Copy {
-    val task = tasks.create(taskName, Copy::class.java)
-    task.from({
-        natives().asSequence().map<File, Any> {
-            if (it.name.endsWith(".jar")) {
-                zipTree(it).files.asSequence().filter {
-                    it.isFile && it.name.matches(libRegex)
-                }.toList()
-            } else {
-                it
-            }
-        }.toList()
-    }.toClosure()) {
-        it.eachFile { fcp: FileCopyDetails ->
-            fcp.relativePath = RelativePath(true, fcp.name)
-            fcp.mode = 493 // 755
-        }
-    }
-    task.into({ File(bundle(), "Contents/MacOS") }.toClosure())
-    return task
-}
-
-fun Project.macOSXTarTask(distributionName: String,
-                          dir: Ref<File>,
-                          config: ScapesEngineApplicationExtension,
-                          taskName: String): Tar {
-    val task = tasks.create(taskName, Tar::class.java)
-    afterEvaluate {
-        task.baseName = "${config.name}-$distributionName"
-    }
-    task.compression = Compression.GZIP
-    task.from(dir.toClosure())
-    return task
-}
-
-private val libRegex = "(.+)\\.(jnilib|dylib)".toRegex()

@@ -15,13 +15,12 @@
  */
 
 import groovy.lang.Closure
-import org.gradle.api.Project
-import java.io.File
+import java.util.concurrent.Callable
 
-fun <R> Function0<R>.toClosure() = KotlinClosure0(this)
-fun <R, P0> Function1<R, P0>.toClosure() = KotlinClosure1(this)
-fun <R, P0, P1> Function2<R, P0, P1>.toClosure() = KotlinClosure2(this)
-fun <R, P0, P1, P2> Function3<R, P0, P1, P2>.toClosure() = KotlinClosure3(this)
+fun <R> (() -> R).toClosure() = KotlinClosure0(this)
+fun <R, P0> ((P0) -> R).toClosure() = KotlinClosure1(this)
+fun <R, P0, P1> ((P0, P1) -> R).toClosure() = KotlinClosure2(this)
+fun <R, P0, P1, P2> ((P0, P1, P2) -> R).toClosure() = KotlinClosure3(this)
 
 class KotlinClosure0<R>(val function: () -> R,
                         owner: Any? = null,
@@ -68,19 +67,21 @@ fun Any?.resolve(): Any? {
     var current = this
     while (true) {
         when (current) {
-            is Function0<*> -> current = current().resolve()
-            is Closure<*> -> current = current.call().resolve()
+            is () -> Any? -> current = current().resolve()
+            is Callable<*> -> current = current.call().resolve()
             else -> return current
         }
     }
 }
 
-inline fun <reified E> Any?.resolveTo() = resolve() as E
+inline fun <reified E> Any?.resolveTo() = resolve() as? E
 
 fun Any?.resolveToString() = resolve().toString()
 
-class Ref<out T>(val get: () -> T) : Function0<T> {
+class Ref<T>(val get: () -> T) : () -> T, Callable<T> {
     override fun invoke() = get()
+
+    override fun call() = get()
 
     override fun equals(other: Any?) = get() == other
 
@@ -92,5 +93,3 @@ class Ref<out T>(val get: () -> T) : Function0<T> {
 fun <T> T.asRef() = Ref { this }
 
 operator fun <T> Ref<T>?.invoke() = this?.invoke()
-
-fun Project.file(file: Ref<File>): File = file(file())

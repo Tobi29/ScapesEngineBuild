@@ -15,108 +15,79 @@
  */
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-open class AppBundlerTask : DefaultTask() {
-    @Input
-    var output: Ref<File>? = null
-    @Input
-    var fullName: Ref<String>? = null
-    @Input
-    var version: Ref<String>? = null
-    @Input
-    var copyright: Ref<String>? = null
-    @Input
-    var mainClass: Ref<String>? = null
-    @Input
-    var jre: Ref<File>? = null
-    @Input
-    var appbundler: Ref<File>? = null
-    @Input
-    var icon: Ref<File>? = null
-    @Input
-    var classpath: Ref<FileCollection>? = null
+fun ScapesEngineApplicationExtension.generatePList() = AppPList(
+        name = name.toString(),
+        displayName = fullName.toString(),
+        executableName = name.toString(),
+        identifier = mainClass.toString(),
+        shortVersion = version.toString(),
+        mainClassName = mainClass.toString(),
+        copyright = copyright.toString(),
+        icon = "Icon.icns",
+        runtime = "JRE.jre",
+        workingDirectoryInLibrary = workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false,
+        applicationCategory = when (category.resolveTo<ApplicationType?>() ?: ApplicationType.UTILITY) {
+            ApplicationType.DEVELOPMENT -> "public.app-category.developer-tools"
+            ApplicationType.GAME -> "public.app-category.games"
+            ApplicationType.GRAPHICS -> "public.app-category.graphics-design"
+            ApplicationType.INTERNET -> "public.app-category.social-networking"
+            ApplicationType.MULTIMEDIA -> "public.app-category.entertainment"
+            ApplicationType.OFFICE -> "public.app-category.productivity"
+            ApplicationType.UTILITY -> "public.app-category.utilities"
+        },
+        options = listOf(
+                Option(value = "-XstartOnFirstThread"),
+                Option(value = "-Xms64M"),
+                Option(value = "-Xmx2048M"),
+                Option(value = "-XX:+UseG1GC"),
+                Option(value = "-XX:MaxGCPauseMillis=1"),
+                Option(value = "-Xdock:icon=Contents/resources/Icon.icns"))
+)
 
-    @InputDirectory
-    fun jre() = jre.invoke() ?: throw IllegalStateException(
-            "No jre given")
+open class AppPListTask : DefaultTask() {
+    @Input
+    var plist: Ref<AppPList>? = null
+    @Input
+    var plistFile: Ref<File> = Ref { temporaryDir.resolve("Info.plist") }
+    @Input
+    var pkgFile: Ref<File> = Ref { temporaryDir.resolve("PkgInfo") }
 
-    @InputFile
-    fun appbundler() = appbundler.invoke() ?: throw IllegalStateException(
-            "No appbundler given")
+    @OutputFile
+    fun plistFile() = plistFile.invoke()
 
-    @InputFile
-    fun icon() = icon.invoke() ?: throw IllegalStateException(
-            "No icon given")
-
-    @OutputDirectory
-    fun output() = output.invoke() ?: throw IllegalStateException(
-            "No output given")
-
-    @InputFiles
-    fun classpath() = classpath.invoke() ?: throw IllegalStateException(
-            "No classpath given")
-
-    init {
-        // Cannot use _ because Gradle Script Kotlin does not yet support it
-        dependsOn({ i: Any? -> classpath().buildDependencies }.toClosure())
-    }
+    @OutputFile
+    fun pkgFile() = pkgFile.invoke()
 
     @TaskAction
     @Suppress("unused")
     fun run() {
-        val jre = jre()
-        val appbundler = appbundler()
-        val icon = icon()
-        val output = output()
-        val fullName = fullName() ?: throw IllegalStateException(
-                "No fullName given")
-        val version = version() ?: throw IllegalStateException(
-                "No version given")
-        val copyright = copyright() ?: throw IllegalStateException(
-                "No copyright given")
-        val mainClass = mainClass() ?: throw IllegalStateException(
-                "No mainClass given")
-        val classpath = classpath()
-        ant.apply {
-            invoke("taskdef") {
-                put("name", "bundleapp")
-                put("classpath", appbundler.absolutePath)
-                put("classname", "com.oracle.appbundler.AppBundlerTask")
-            }
-            invoke("bundleapp", {
-                put("outputdirectory", output.parentFile.absolutePath)
-                put("name", output.name.substringBeforeLast(".app"))
-                put("displayname", fullName)
-                put("identifier", mainClass)
-                put("shortversion", version)
-                put("icon", icon.absolutePath)
-                put("mainclassname", mainClass)
-                put("copyright", copyright)
-                put("applicationCategory", "public.app-category.games")
-                put("executableName", fullName)
-            }) {
-                classpath.addToAntBuilder(this, "classpath",
-                        FileCollection.AntType.FileSet)
-                invoke("arch") { put("name", "x86_64") }
-                invoke("runtime") {
-                    put("dir", "${jre.absolutePath}/Contents/Home")
-                }
-                invoke("option") { put("value", "-XstartOnFirstThread") }
-                invoke("option") { put("value", "-Xms64M") }
-                invoke("option") { put("value", "-Xmx2048M") }
-                invoke("option") { put("value", "-XX:+UseG1GC") }
-                invoke("option") { put("value", "-XX:MaxGCPauseMillis=1") }
-                invoke("option") {
-                    put("value", "-Xdock:icon=Contents/resources/Icon.icns")
-                }
-                invoke("argument") {
-                    put("value",
-                            "\$HOME/Library/Application Support/$fullName")
-                }
-            }
-        }
+        val plist = plist() ?: throw IllegalStateException("No plist given")
+        val plistFile = plistFile()
+        val pkgFile = pkgFile()
+        plist.writeInfoPlist(plistFile)
+        plist.writePkgInfo(pkgFile)
+    }
+}
+
+open class JREPListTask : DefaultTask() {
+    @Input
+    var plist: Ref<JREPList>? = null
+    @Input
+    var plistFile: Ref<File> = Ref { temporaryDir.resolve("Info.plist") }
+
+    @OutputFile
+    fun plistFile() = plistFile.invoke()
+
+    @TaskAction
+    @Suppress("unused")
+    fun run() {
+        val plist = plist() ?: throw IllegalStateException("No plist given")
+        val plistFile = plistFile()
+        plist.writeInfoPlist(plistFile)
     }
 }

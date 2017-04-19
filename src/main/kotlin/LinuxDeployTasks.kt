@@ -29,6 +29,8 @@ open class StartupScriptTask : DefaultTask() {
     var libPath: Ref<File>? = null
     @Input
     var mainClass: Ref<String>? = null
+    @Input
+    var workingDirInLibrary: Ref<Boolean>? = null
 
     @OutputFile
     fun output() = output.invoke() ?: throw IllegalStateException(
@@ -44,6 +46,11 @@ open class StartupScriptTask : DefaultTask() {
                 "No mainClass given")
         output().printWriter().use { writer ->
             writer.println("#!/bin/bash")
+            if (workingDirInLibrary() ?: false) {
+                writer.println("runtime=~/.$execName")
+                writer.println("mkdir -p \"\$runtime\"")
+                writer.println("cd \"\$runtime\"")
+            }
             writer.println("export CLASSPATH=\"$libPath/*\"")
             writer.println(
                     "exec -a $execName java -Djava.library.path=$libPath $mainClass \$@")

@@ -1,0 +1,6 @@
+"JRELoadError" = "Unable to load Java Runtime Environment.";
+"LibraryMkdirError" = "Unable to create Library directory.";
+"LibraryChdirError" = "Unable to enter Library directory.";
+"MainClassNameRequired" = "Main class name is required.";
+"JavaDirectoryNotFound" = "Unable to enumerate Java directory contents.";
+"BundlePathContainsColon" = "Cannot launch from folder that contains a \"/\" in its name.";
