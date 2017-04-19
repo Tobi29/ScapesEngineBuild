@@ -20,19 +20,14 @@ Note: Windows deployment can take a long time due to compression, edit
 `Setup.iss` to disable compression for testing.
 
 ### Linux
+  * Unix environment highly recommended
   * `deployLinux32` and `deployLinux64` should be available out-of-the-box
 
 ### MacOSX
   * Unix environment highly recommended
-  * Download a MacOSX (64bit, tar.gz version) JRE (Oracle JRE recommended)
-  * Place the unextracted archive into `buildSrc/resources/JRE/MacOSX/`
-  * Run `tasks` target to check if `deployMacOSX` is available
+  * `deployMacOSX` should be available out-of-the-box
 
 ### Windows
-  * Download a Windows (32bit + 64bit, tar.gz version)
-    JRE (Oracle JRE recommended)
-  * Place the unextracted archive into `buildSrc/resources/JRE/Windows/32`
-    and `buildSrc/resources/JRE/Windows/64` respectively
   * Download Launch4j for your platform
   * Place the extracted archives into `buildSrc/resources/Launch4j`
     (Make sure the jar is in `buildSrc/resources/Launch4j/launch4j.jar`!)
