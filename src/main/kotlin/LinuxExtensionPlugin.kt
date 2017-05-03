@@ -81,5 +81,8 @@ fun Project.addDeployLinuxExtensionTask(arch: String,
             "Contains tarball that can be extracted into root for easier package creation"
     task.group = "Deployment"
     task.dependsOn("jar")
+    afterEvaluate {
+        task.baseName = "${config.name}-Linux$arch"
+    }
     return task
 }
