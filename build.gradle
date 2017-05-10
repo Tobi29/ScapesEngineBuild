@@ -32,7 +32,7 @@ apply plugin: "idea"
 dependencies {
     compile gskp.gradleScriptKotlinApi(project)
     compile "org.jetbrains.kotlin:kotlin-stdlib:$gsk.embeddedKotlinVersion"
-    compile "com.github.jengelman.gradle.plugins:shadow:1.2.4"
+    compile "com.github.jengelman.gradle.plugins:shadow:2.0.0"
     compile "de.undercouch:gradle-download-task:3.2.0"
 }
 
