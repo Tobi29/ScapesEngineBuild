@@ -56,9 +56,13 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
 fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
                                 natives: Ref<FileCollection>,
                                 application: ScapesEngineApplicationExtension): Task? {
+    val adoptOpenJDKVersion = Ref {
+        application.adoptOpenJDKVersion.resolveTo<String?>()
+                ?: throw IllegalStateException("No usable AdoptOpenJDK version")
+    }
+
     // JRE task
-    val (jreTask, jre) = adoptOpenJDKMacOSX(
-            Ref { application.adoptOpenJDKVersion.resolveTo<String?>() ?: "jdk8u152-b01" })
+    val (jreTask, jre) = adoptOpenJDKMacOSX(adoptOpenJDKVersion)
 
     // App plist task
     val appPListTask = task<AppPListTask>("appPListMacOSX") {
@@ -67,7 +71,7 @@ fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
 
     // JRE plist task
     val jrePListTask = task<JREPListTask>("jrePListMacOSX") {
-        plist = Ref { adoptOpenJDKPList("jdk8u152-b01") }
+        plist = Ref { adoptOpenJDKPList(adoptOpenJDKVersion()) }
     }
 
 

@@ -68,16 +68,20 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
                                   application: ScapesEngineApplicationExtension): List<Task> {
     val deployTasks = ArrayList<Task>()
 
-    val jdkVersion = Ref {
-        application.ojdkBuildVersion.resolveTo<Pair<String, String>>() ?: Pair(
-                "1.8.0.121-2", "1.8.0.121-2.b13")
+    val adoptOpenJDKVersion = Ref {
+        application.adoptOpenJDKVersion.resolveTo<String?>()
+                ?: throw IllegalStateException("No usable AdoptOpenJDK version")
+    }
+    val ojdkBuildVersion = Ref {
+        application.ojdkBuildVersion.resolveTo<Pair<String, String>>()
+                ?: throw IllegalStateException("No usable OJDKBuild version")
     }
 
     // JRE Task 32-Bit
-    val (jreTask32, jre32) = ojdkBuildWindows(jdkVersion, "32")
+    val (jreTask32, jre32) = ojdkBuildWindows(ojdkBuildVersion, "32")
 
     // JRE Task 64-Bit
-    val (jreTask64, jre64) = ojdkBuildWindows(jdkVersion, "64")
+    val (jreTask64, jre64) = adoptOpenJDKWindows(adoptOpenJDKVersion, "64")
 
     // Program task
     val programTask = windowsProgramTask(false,

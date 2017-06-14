@@ -33,12 +33,31 @@ fun Project.adoptOpenJDKMacOSX(version: Ref<String>) =
 fun Project.adoptOpenJDKMacOSX(version: Ref<String>,
                                release: Ref<String>) =
         jdk("MacOSX", release, Ref { "./j2sdk-image" }, "./j2sdk-image",
-                Ref { adoptOpenJDKURL(version(), release()) }, "tar.gz",
-                { tarTree(it) }, { pruneJREMacOSX(it) })
+                Ref { adoptOpenJDKURL(version(), release(), "tar.gz") },
+                "tar.gz", { tarTree(it) }, { pruneJREMacOSX(it) })
+
+fun Project.adoptOpenJDKWindows(version: Ref<String>,
+                                arch: String) =
+        adoptOpenJDKWindows(version, Ref {
+            adoptOpenJDKRelease("OpenJDK8", version(), "Win",
+                    when (arch) {
+                        "64" -> "x64"
+                        else -> throw IllegalArgumentException(
+                                "Invalid architecture: $arch")
+                    })
+        }, arch)
+
+fun Project.adoptOpenJDKWindows(version: Ref<String>,
+                                release: Ref<String>,
+                                arch: String) =
+        jdk("Windows$arch", release, Ref { "j2sdk-image" }, "j2sdk-image",
+                Ref { adoptOpenJDKURL(version(), release(), "zip") }, "zip",
+                { zipTree(it) }, { pruneJREWindows(it) })
 
 fun adoptOpenJDKURL(version: String,
-                    release: String) =
-        URL("https://github.com/AdoptOpenJDK/openjdk-releases/releases/download/$version/$release.tar.gz")
+                    release: String,
+                    extension: String) =
+        URL("https://github.com/AdoptOpenJDK/openjdk-releases/releases/download/$version/$release.$extension")
 
 fun adoptOpenJDKRelease(jdk: String,
                         version: String,

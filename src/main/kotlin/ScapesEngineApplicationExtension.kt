@@ -38,9 +38,9 @@ open class ScapesEngineApplicationExtension {
     @Input
     var workingDirectoryInLibrary: Any? = null
     @Input
-    var adoptOpenJDKVersion: Any? = null
+    var adoptOpenJDKVersion: Any? = "jdk8u152-b04"
     @Input
-    var ojdkBuildVersion: Any? = null
+    var ojdkBuildVersion: Any? = Pair("1.8.0.131-1", "1.8.0.131-1.b11")
 }
 
 enum class ApplicationType {
