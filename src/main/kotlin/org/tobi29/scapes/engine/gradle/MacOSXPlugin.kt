@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
+package org.tobi29.scapes.engine.gradle
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
 import org.gradle.script.lang.kotlin.task
+import ApplicationType
+import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
+import org.tobi29.scapes.engine.gradle.task.AppPListTask
+import org.tobi29.scapes.engine.gradle.task.JREPListTask
 
 open class ScapesEngineApplicationMacOSX : Plugin<Project> {
     @Suppress("ReplaceSingleLineLet")
@@ -31,9 +38,10 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
                 ScapesEngineApplicationExtension::class.java)
 
         // Platform deploy task
-        val deployMacOSXTask = target.addDeployMacOSXTask(Ref {
-            target.allJars("MacOSX")
-        }, Ref {
+        val deployMacOSXTask = target.addDeployMacOSXTask(
+                provider {
+                    target.allJars("MacOSX")
+                }, provider<FileCollection> {
             target.configurations.getByName("nativesMacOSX")
         }, config)
 
@@ -53,59 +61,57 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
     }
 }
 
-fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
-                                natives: Ref<FileCollection>,
-                                application: ScapesEngineApplicationExtension): Task? {
-    val adoptOpenJDKVersion = Ref {
-        application.adoptOpenJDKVersion.resolveTo<String?>()
-                ?: throw IllegalStateException("No usable AdoptOpenJDK version")
-    }
-
+fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
+                                natives: Provider<FileCollection>,
+                                config: ScapesEngineApplicationExtension): Task? {
     // JRE task
-    val (jreTask, jre) = adoptOpenJDKMacOSX(adoptOpenJDKVersion)
+    val (jreTask, jre) = adoptOpenJDKMacOSX(
+            config.adoptOpenJDKVersionProvider)
 
     // App plist task
     val appPListTask = task<AppPListTask>("appPListMacOSX") {
-        plist = Ref { application.generatePList() }
+        plistProvider.set(provider { config.generatePList() })
     }
 
     // JRE plist task
     val jrePListTask = task<JREPListTask>("jrePListMacOSX") {
-        plist = Ref { adoptOpenJDKPList(adoptOpenJDKVersion()) }
+        plistProvider.set(config.adoptOpenJDKVersionProvider.map {
+            adoptOpenJDKPList(it)
+        })
     }
 
 
     // Main task
     val task = task<Tar>("deployMacOSX") {
         compression = Compression.GZIP
-        val bundle = Ref { "${application.fullName}.app" }
-        val contents = Ref { "$bundle/Contents" }
-        val javaDir = Ref { "$contents/Java" }
-        val macOSDir = Ref { "$contents/MacOS" }
-        val plugInsDir = Ref { "$contents/PlugIns" }
-        val resourcesDir = Ref { "$contents/Resources" }
+        val bundle = config.fullNameProvider.map { "$it.app" }
+        val contents = bundle.map { "$it/Contents" }
+        val javaDir = contents.map { "$it/Java" }
+        val macOSDir = contents.map { "$it/MacOS" }
+        val plugInsDir = contents.map { "$it/PlugIns" }
+        val resourcesDir = contents.map { "$it/Resources" }
 
         from(jars.toClosure()) { it.into(javaDir.toClosure()) }
         from(jre.toClosure()) {
-            it.into({ "$plugInsDir/JRE.jre/Contents/Home" }.toClosure())
+            it.into(plugInsDir.map { "$it/JRE.jre/Contents/Home" }.toClosure())
         }
         // There seems to be no way to add symlinks to tars with gradle
         // So we just copy the library (It is only 72 KiB)
         from(jre.toClosure()) {
             it.include("lib/jli/libjli.dylib")
             it.eachFile { fcp: FileCopyDetails ->
-                fcp.relativePath = RelativePath(true, plugInsDir(), "JRE.jre",
-                        "Contents", "MacOS", "libjli.dylib")
+                fcp.relativePath = RelativePath(true, plugInsDir.get(),
+                        "JRE.jre", "Contents", "MacOS", "libjli.dylib")
                 fcp.mode = 493 // 755
             }
             it.includeEmptyDirs = false
         }
-        from(jrePListTask.plistFile()) {
-            it.into({ "$plugInsDir/JRE.jre/Contents" }.toClosure())
+        from(jrePListTask.plistFileProvider.toClosure()) {
+            it.into(plugInsDir.map { "$it/JRE.jre/Contents" }.toClosure())
         }
-        from({ fetchNativesMacOSX(natives()) }.toClosure()) {
+        from(natives.map { fetchNativesMacOSX(it) }.toClosure()) {
             it.eachFile { fcp: FileCopyDetails ->
-                fcp.relativePath = RelativePath(true, macOSDir(), fcp.name)
+                fcp.relativePath = RelativePath(true, macOSDir.get(), fcp.name)
                 fcp.mode = 493 // 755
             }
             it.includeEmptyDirs = false
@@ -114,8 +120,8 @@ fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
             rootProject.files("buildSrc/resources/AppBundler/JavaAppLauncher")
         }.toClosure()) {
             it.eachFile { fcp: FileCopyDetails ->
-                fcp.relativePath = RelativePath(true, macOSDir(),
-                        application.name.toString())
+                fcp.relativePath = RelativePath(true, macOSDir.get(),
+                        config.name)
                 fcp.mode = 493 // 755
             }
             it.includeEmptyDirs = false
@@ -126,8 +132,9 @@ fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
         }.toClosure()) {
             it.into(resourcesDir.toClosure())
         }
-        from({
-            files(appPListTask.plistFile(), appPListTask.pkgFile())
+        from(map(appPListTask.plistFileProvider,
+                appPListTask.pkgFileProvider) { a, b ->
+            files(a, b)
         }.toClosure()) {
             it.into(contents.toClosure())
         }
@@ -139,5 +146,37 @@ fun Project.addDeployMacOSXTask(jars: Ref<FileCollection>,
     task.dependsOn(appPListTask)
     task.dependsOn(jrePListTask)
     task.dependsOn("jar")
+    afterEvaluate {
+        task.baseName = "${config.name}-MacOSX"
+    }
     return task
 }
+
+fun ScapesEngineApplicationExtension.generatePList() = AppPList(
+        name = name,
+        displayName = fullName,
+        executableName = name,
+        identifier = mainClass,
+        shortVersion = version,
+        mainClassName = mainClass,
+        copyright = copyright,
+        icon = "Icon.icns",
+        runtime = "JRE.jre",
+        workingDirectoryInLibrary = workingDirectoryInLibrary,
+        applicationCategory = when (category) {
+            ApplicationType.DEVELOPMENT -> "public.app-category.developer-tools"
+            ApplicationType.GAME -> "public.app-category.games"
+            ApplicationType.GRAPHICS -> "public.app-category.graphics-design"
+            ApplicationType.INTERNET -> "public.app-category.social-networking"
+            ApplicationType.MULTIMEDIA -> "public.app-category.entertainment"
+            ApplicationType.OFFICE -> "public.app-category.productivity"
+            ApplicationType.UTILITY -> "public.app-category.utilities"
+        },
+        options = listOf(
+                Option(value = "-XstartOnFirstThread"),
+                Option(value = "-Xms64M"),
+                Option(value = "-Xmx2048M"),
+                Option(value = "-XX:+UseG1GC"),
+                Option(value = "-XX:MaxGCPauseMillis=1"),
+                Option(value = "-Xdock:icon=Contents/resources/Icon.icns"))
+)

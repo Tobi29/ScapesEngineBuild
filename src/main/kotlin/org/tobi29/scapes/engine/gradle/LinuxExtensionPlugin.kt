@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+package org.tobi29.scapes.engine.gradle
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
-import java.io.File
+import org.gradle.api.provider.Provider
+import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
+import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineExtensionExtension
 
 open class ScapesEngineExtensionLinux : Plugin<Project> {
     override fun apply(target: Project) {
@@ -26,16 +30,20 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
                 ScapesEngineExtensionExtension::class.java)
 
         // Platform deploy tasks
-        val deployLinuxTask32 = target.addDeployLinuxExtensionTask("32", Ref {
-            target.allJars("Linux32") - config.parent?.allJars("Linux32")
-        }, Ref {
+        val deployLinuxTask32 = target.addDeployLinuxExtensionTask("32",
+                provider {
+                    target.allJars("Linux32") - config.parent?.allJars(
+                            "Linux32")
+                }, provider {
             target.configurations.getByName("nativesLinux32")
-        }, Ref { config.parent?.let(::getName) ?: "" }, config)
-        val deployLinuxTask64 = target.addDeployLinuxExtensionTask("64", Ref {
-            target.allJars("Linux64") - config.parent?.allJars("Linux64")
-        }, Ref {
+        }, getName(target.parent), config)
+        val deployLinuxTask64 = target.addDeployLinuxExtensionTask("64",
+                provider {
+                    target.allJars("Linux64") - config.parent?.allJars(
+                            "Linux64")
+                }, provider {
             target.configurations.getByName("nativesLinux64")
-        }, Ref { config.parent?.let(::getName) ?: "INVALID" }, config)
+        }, getName(target.parent), config)
 
         // Full deploy task
         val deployTask = target.tasks.getByName("deploy")
@@ -48,35 +56,36 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
     }
 }
 
-private fun getName(project: Project): String? {
-    project.extensions.findByType(
-            ScapesEngineExtensionExtension::class.java)?.let { extension ->
-        return extension.name.resolveToString()
+private fun getName(
+        project: Project?,
+        default: Provider<String> = provider("INVALID")
+): Provider<String> {
+    project?.extensions?.findByType(
+            ScapesEngineExtensionExtension::class.java)?.let { config ->
+        return config.nameProvider
     }
-    project.extensions.findByType(
-            ScapesEngineApplicationExtension::class.java)?.let { application ->
-        return application.name.resolveToString()
+    project?.extensions?.findByType(
+            ScapesEngineApplicationExtension::class.java)?.let { config ->
+        return config.nameProvider
     }
-    return null
+    return default
 }
 
 fun Project.addDeployLinuxExtensionTask(arch: String,
-                                        jars: Ref<FileCollection>,
-                                        natives: Ref<FileCollection>,
-                                        parentName: Ref<String>,
+                                        jars: Provider<FileCollection>,
+                                        natives: Provider<FileCollection>,
+                                        parentName: Provider<String>,
                                         config: ScapesEngineExtensionExtension): Task? {
     val libPath = if (rootProject.hasProperty("libPath")) {
-        File(rootProject.property("libPath").toString())
+        rootProject.property("libPath").toString()
     } else {
-        File("/usr/share/java")
+        "/usr/share/java"
     }
-    val lowerName = Ref { parentName.resolveToString().toLowerCase() }
-    val libDir = Ref { File(libPath, lowerName()) }
+    val libDir = parentName.map { "$libPath/${it.toLowerCase()}" }
 
     // Main task
     val task = linuxTarTask(libDir, "Linux$arch", jars,
-            natives, Ref { config.name.resolveToString() },
-            "deployLinux$arch")
+            natives, config.nameProvider, "deployLinux$arch")
     task.description =
             "Contains tarball that can be extracted into root for easier package creation"
     task.group = "Deployment"

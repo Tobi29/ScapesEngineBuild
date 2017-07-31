@@ -14,39 +14,52 @@
  * limitations under the License.
  */
 
+package org.tobi29.scapes.engine.gradle.task
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.tobi29.scapes.engine.gradle.getValue
+import org.tobi29.scapes.engine.gradle.property
+import org.tobi29.scapes.engine.gradle.setValue
 import java.io.File
+import java.io.PrintWriter
 
 open class StartupScriptTask : DefaultTask() {
-    @Input
-    var output: Ref<File>? = null
-    @Input
-    var execName: Ref<String>? = null
-    @Input
-    var libPath: Ref<File>? = null
-    @Input
-    var mainClass: Ref<String>? = null
-    @Input
-    var workingDirInLibrary: Ref<Boolean>? = null
+    val outputProvider = project.property<File>()
 
-    @OutputFile
-    fun output() = output.invoke() ?: throw IllegalStateException(
-            "No output given")
+    var output by outputProvider
+        @OutputFile get
+
+    val execNameProvider = project.property<String>()
+
+    var execName by execNameProvider
+        @Input get
+
+    val libPathProvider = project.property<String>()
+
+    var libPath by libPathProvider
+
+    val mainClassProvider = project.property<String>()
+
+    var mainClass by mainClassProvider
+        @Input get
+
+    val workingDirInLibraryProvider = project.property<Boolean>()
+            .apply { set(false) }
+
+    var workingDirInLibrary by workingDirInLibraryProvider
+        @Input get
 
     @TaskAction
     fun run() {
-        val execName = execName() ?: throw IllegalStateException(
-                "No execName given")
-        val libPath = libPath() ?: throw IllegalStateException(
-                "No libPath given")
-        val mainClass = mainClass() ?: throw IllegalStateException(
-                "No mainClass given")
-        output().printWriter().use { writer ->
+        val execName = execName
+        val libPath = libPath
+        val mainClass = mainClass
+        output.printWriter().use { writer: PrintWriter ->
             writer.println("#!/bin/bash")
-            if (workingDirInLibrary() ?: false) {
+            if (workingDirInLibrary) {
                 writer.println("runtime=~/.$execName")
                 writer.println("mkdir -p \"\$runtime\"")
                 writer.println("cd \"\$runtime\"")

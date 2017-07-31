@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
+package org.tobi29.scapes.engine.gradle
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
+import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
+import org.tobi29.scapes.engine.gradle.task.StartupScriptTask
 import java.io.File
 
 open class ScapesEngineApplicationLinux : Plugin<Project> {
@@ -30,20 +35,22 @@ open class ScapesEngineApplicationLinux : Plugin<Project> {
                 ScapesEngineApplicationExtension::class.java)
 
         // Platform deploy tasks
-        val deployLinuxTask32 = target.addDeployLinuxTask("32", Ref {
-            target.configurations.getByName("runtime") + target.files(
-                    target.tasks.getByName(
-                            "jar")) + target.configurations.getByName(
-                    "runtimeLinux32")
-        }, Ref {
+        val deployLinuxTask32 = target.addDeployLinuxTask("32",
+                provider {
+                    target.configurations.getByName("runtime") + target.files(
+                            target.tasks.getByName(
+                                    "jar")) + target.configurations.getByName(
+                            "runtimeLinux32")
+                }, provider {
             target.configurations.getByName("nativesLinux32")
         }, config)
-        val deployLinuxTask64 = target.addDeployLinuxTask("64", Ref {
-            target.configurations.getByName("runtime") + target.files(
-                    target.tasks.getByName(
-                            "jar")) + target.configurations.getByName(
-                    "runtimeLinux64")
-        }, Ref {
+        val deployLinuxTask64 = target.addDeployLinuxTask("64",
+                provider {
+                    target.configurations.getByName("runtime") + target.files(
+                            target.tasks.getByName(
+                                    "jar")) + target.configurations.getByName(
+                            "runtimeLinux64")
+                }, provider {
             target.configurations.getByName("nativesLinux64")
         }, config)
 
@@ -70,30 +77,31 @@ open class ScapesEngineApplicationLinux : Plugin<Project> {
 }
 
 fun Project.addDeployLinuxTask(arch: String,
-                               jars: Ref<FileCollection>,
-                               natives: Ref<FileCollection>,
+                               jars: Provider<FileCollection>,
+                               natives: Provider<FileCollection>,
                                config: ScapesEngineApplicationExtension): Task? {
     val libPath = if (rootProject.hasProperty("libPath")) {
-        File(rootProject.property("libPath").toString())
+        rootProject.property("libPath").toString()
     } else {
-        File("/usr/share/java")
+        "/usr/share/java"
     }
     val binPath = if (rootProject.hasProperty("binPath")) {
-        File(rootProject.property("binPath").toString())
+        rootProject.property("binPath").toString()
     } else {
-        File("/usr/bin")
+        "/usr/bin"
     }
-    val lowerName = Ref { config.name.resolveToString().toLowerCase() }
-    val libDir = Ref { File(libPath, lowerName()) }
+    val libDir = config.nameProvider.map { "$libPath/${it.toLowerCase()}" }
 
     // Script task
     val scriptTask = linuxScriptTask(libDir, config,
             "scriptLinux$arch")
 
     // Main task
-    val task = linuxTarTask(libDir, Ref { binPath }, "Linux$arch", jars,
+    val task = linuxTarTask(libDir,
+            provider(binPath), "Linux$arch", jars,
             natives,
-            Ref { scriptTask.output() }, Ref { config.name.resolveToString() },
+            scriptTask.outputProvider,
+            config.nameProvider,
             "deployLinux$arch")
     task.description =
             "Contains tarball that can be extracted into root for easier package creation"
@@ -106,36 +114,36 @@ fun Project.addDeployLinuxTask(arch: String,
     return task
 }
 
-fun Project.linuxScriptTask(libPath: Ref<File>,
-                            application: ScapesEngineApplicationExtension,
+fun Project.linuxScriptTask(libPath: Provider<String>,
+                            config: ScapesEngineApplicationExtension,
                             taskName: String): StartupScriptTask {
     return linuxScriptTask(libPath,
-            Ref { application.name.resolveToString().toLowerCase() },
-            Ref { application.mainClass.resolveToString() }, taskName,
-            Ref { application.workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false })
+            config.nameProvider.map { it.toLowerCase() },
+            config.mainClassProvider, taskName,
+            config.workingDirectoryInLibraryProvider)
 }
 
-fun Project.linuxScriptTask(libPath: Ref<File>,
-                            execName: Ref<String>,
-                            mainClass: Ref<String>,
+fun Project.linuxScriptTask(libPath: Provider<String>,
+                            execName: Provider<String>,
+                            mainClass: Provider<String>,
                             taskName: String,
-                            workingDirInLibrary: Ref<Boolean>): StartupScriptTask {
+                            workingDirInLibrary: Provider<Boolean>): StartupScriptTask {
     val task = tasks.create(taskName, StartupScriptTask::class.java)
-    task.execName = execName
-    task.libPath = libPath
-    task.mainClass = mainClass
-    task.workingDirInLibrary = workingDirInLibrary
-    task.output = Ref { File(task.temporaryDir, execName()) }
+    task.execNameProvider.set(execName)
+    task.libPathProvider.set(libPath)
+    task.mainClassProvider.set(mainClass)
+    task.workingDirInLibraryProvider.set(workingDirInLibrary)
+    task.outputProvider.set(execName.map { File(task.temporaryDir, it) })
     return task
 }
 
-fun Project.linuxTarTask(libPath: Ref<File>,
-                         binPath: Ref<File>,
+fun Project.linuxTarTask(libPath: Provider<String>,
+                         binPath: Provider<String>,
                          distributionName: String,
-                         jars: Ref<FileCollection>,
-                         natives: Ref<FileCollection>,
-                         script: Ref<File>,
-                         name: Ref<String>,
+                         jars: Provider<FileCollection>,
+                         natives: Provider<FileCollection>,
+                         script: Provider<File>,
+                         name: Provider<String>,
                          taskName: String): Tar {
     val task = linuxTarTask(libPath, distributionName, jars, natives, name,
             taskName)
@@ -143,20 +151,21 @@ fun Project.linuxTarTask(libPath: Ref<File>,
     return task
 }
 
-fun Project.linuxTarTask(libPath: Ref<File>,
+fun Project.linuxTarTask(libPath: Provider<String>,
                          distributionName: String,
-                         jars: Ref<FileCollection>,
-                         natives: Ref<FileCollection>,
-                         name: Ref<String>,
+                         jars: Provider<FileCollection>,
+                         natives: Provider<FileCollection>,
+                         name: Provider<String>,
                          taskName: String): Tar {
     val task = tasks.create(taskName, Tar::class.java)
     task.compression = Compression.GZIP
     task.from(jars.toClosure()) {
         it.into(libPath.toClosure())
     }
-    task.from({ fetchNativesLinux(natives()) }.toClosure()) {
+    task.from(natives.map { fetchNativesLinux(it) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
-            fcp.relativePath = RelativePath(true, libPath.toString(), fcp.name)
+            fcp.relativePath = RelativePath(true,
+                    libPath.get().toString(), fcp.name)
             fcp.mode = 493 // 755
         }
     }

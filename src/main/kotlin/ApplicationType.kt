@@ -14,35 +14,6 @@
  * limitations under the License.
  */
 
-import org.gradle.api.tasks.Input
-
-open class ScapesEngineApplicationExtension {
-    @Input
-    var name: Any? = null
-    @Input
-    var fullName: Any? = null
-    @Input
-    var version: Any? = null
-    @Input
-    var company: Any? = null
-    @Input
-    var url: Any? = null
-    @Input
-    var copyright: Any? = null
-    @Input
-    var category: Any? = ApplicationType.UTILITY
-    @Input
-    var uuid: Any? = null
-    @Input
-    var mainClass: Any? = null
-    @Input
-    var workingDirectoryInLibrary: Any? = null
-    @Input
-    var adoptOpenJDKVersion: Any? = "jdk8u152-b04"
-    @Input
-    var ojdkBuildVersion: Any? = Pair("1.8.0.131-1", "1.8.0.131-1.b11")
-}
-
 enum class ApplicationType {
     DEVELOPMENT,
     GAME,

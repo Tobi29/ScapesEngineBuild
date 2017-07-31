@@ -1,6 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.api.Project
-
 /*
  * Copyright 2012-2017 Tobi29
  *
@@ -16,6 +13,11 @@ import org.gradle.api.Project
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.tobi29.scapes.engine.gradle
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.api.Project
 
 fun Project.addShadowTask(platform: String,
                           taskName: String): ShadowJar {

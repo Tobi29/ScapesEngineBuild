@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-import org.gradle.api.Project
-import org.gradle.api.tasks.Input
+package org.tobi29.scapes.engine.gradle.dsl
 
-open class ScapesEngineExtensionExtension {
-    @Input
-    var name: Any? = null
-    @Input
-    var parent: Project? = null
+import org.gradle.api.Project
+import org.tobi29.scapes.engine.gradle.getValue
+import org.tobi29.scapes.engine.gradle.property
+import org.tobi29.scapes.engine.gradle.setValue
+
+open class ScapesEngineExtensionExtension(target: Project) {
+    val nameProvider = target.property<String>()
+
+    var name by nameProvider
+
+    val parentProvider = target.property<Project>()
+
+    var parent by parentProvider
 }
 

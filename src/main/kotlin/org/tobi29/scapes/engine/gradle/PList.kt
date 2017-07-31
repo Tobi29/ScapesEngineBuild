@@ -24,10 +24,9 @@
  * questions.
  */
 
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
-import java.io.IOException
+package org.tobi29.scapes.engine.gradle
+
+import java.io.*
 import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamWriter
@@ -57,7 +56,7 @@ data class AppPList(val name: String = "",
                     val exportedTypeDeclarations: List<TypeDeclaration> = emptyList(),
                     val importedTypeDeclarations: List<TypeDeclaration> = emptyList(),
                     val plistEntries: List<PListEntry> = emptyList(),
-                    val environments: List<Environment> = emptyList())
+                    val environments: List<Environment> = emptyList()) : Serializable
 
 data class JREPList(val name: String = "",
                     val identifier: String = "",
@@ -70,7 +69,7 @@ data class JREPList(val name: String = "",
                     val jvmMinimumSystemVersion: String,
                     val jvmPlatformVersion: String,
                     val jvmVendor: String,
-                    val jvmVersion: String)
+                    val jvmVersion: String) : Serializable
 
 data class TypeDeclaration(
         val identifier: String,
@@ -80,7 +79,7 @@ data class TypeDeclaration(
         val conformsTo: List<String> = listOf("public.data"),
         val osTypes: List<String>? = null,
         val mimeTypes: List<String>? = null,
-        val extensions: List<String>? = null)
+        val extensions: List<String>? = null) : Serializable
 
 data class BundleDocument(
         val name: String = "",
@@ -90,17 +89,17 @@ data class BundleDocument(
         val extensions: List<String>? = null,
         val contentTypes: List<String>? = null,
         val exportableTypes: List<String>? = null,
-        val isPackage: Boolean = false)
+        val isPackage: Boolean = false) : Serializable
 
 data class Option(val key: String? = null,
-                  val value: String)
+                  val value: String) : Serializable
 
 data class Environment(val key: String,
-                       val value: String)
+                       val value: String) : Serializable
 
 data class PListEntry(val type: String,
                       val key: String,
-                      val value: String)
+                      val value: String) : Serializable
 
 fun AppPList.writeInfoPlist(file: File) {
     writeInfoPList(file) {

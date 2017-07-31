@@ -16,6 +16,8 @@
 
 @file:Suppress("NOTHING_TO_INLINE")
 
+package org.tobi29.scapes.engine.gradle
+
 import groovy.util.BuilderSupport
 
 inline operator fun BuilderSupport.invoke(method: String,
