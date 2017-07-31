@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-import groovy.lang.Closure
-import java.util.concurrent.Callable
+package org.tobi29.scapes.engine.gradle
 
-fun <R> (() -> R).toClosure() = KotlinClosure0(this)
-fun <R, P0> ((P0) -> R).toClosure() = KotlinClosure1(this)
-fun <R, P0, P1> ((P0, P1) -> R).toClosure() = KotlinClosure2(this)
-fun <R, P0, P1, P2> ((P0, P1, P2) -> R).toClosure() = KotlinClosure3(this)
+import groovy.lang.Closure
+
+fun <R> (() -> R).toClosure() = KotlinClosure0(
+        this)
+
+fun <R, P0> ((P0) -> R).toClosure() = KotlinClosure1(
+        this)
+
+fun <R, P0, P1> ((P0, P1) -> R).toClosure() = KotlinClosure2(
+        this)
+
+fun <R, P0, P1, P2> ((P0, P1, P2) -> R).toClosure() = KotlinClosure3(
+        this)
 
 class KotlinClosure0<R>(val function: () -> R,
                         owner: Any? = null,
@@ -62,34 +70,3 @@ class KotlinClosure3<R, in P0, in P1, in P2>(val function: (P0, P1, P2) -> R,
                p1: P1,
                p2: P2): R = function(p0, p1, p2)
 }
-
-fun Any?.resolve(): Any? {
-    var current = this
-    while (true) {
-        when (current) {
-            is () -> Any? -> current = current().resolve()
-            is Callable<*> -> current = current.call().resolve()
-            else -> return current
-        }
-    }
-}
-
-inline fun <reified E> Any?.resolveTo() = resolve() as? E
-
-fun Any?.resolveToString() = resolve().toString()
-
-class Ref<T>(val get: () -> T) : () -> T, Callable<T> {
-    override fun invoke() = get()
-
-    override fun call() = get()
-
-    override fun equals(other: Any?) = get() == other
-
-    override fun hashCode() = get()?.hashCode() ?: 0
-
-    override fun toString() = get().toString()
-}
-
-fun <T> T.asRef() = Ref { this }
-
-operator fun <T> Ref<T>?.invoke() = this?.invoke()

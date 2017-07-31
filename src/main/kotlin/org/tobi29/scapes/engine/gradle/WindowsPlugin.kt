@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
+package org.tobi29.scapes.engine.gradle
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.bundling.Zip
+import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
+import org.tobi29.scapes.engine.gradle.task.Launch4jTask
 import java.io.File
 
 open class ScapesEngineApplicationWindows : Plugin<Project> {
@@ -31,15 +36,16 @@ open class ScapesEngineApplicationWindows : Plugin<Project> {
                 ScapesEngineApplicationExtension::class.java)
 
         // Platform deploy task
-        val deployWindowsTasks = target.addDeployWindowsTasks(Ref {
-            target.allCommonJars()
-        }, Ref {
+        val deployWindowsTasks = target.addDeployWindowsTasks(
+                provider {
+                    target.allCommonJars()
+                }, provider {
             target.configurations.getByName("runtimeWindows32")
-        }, Ref {
+        }, provider {
             target.configurations.getByName("runtimeWindows64")
-        }, Ref {
+        }, provider {
             target.configurations.getByName("nativesWindows32")
-        }, Ref {
+        }, provider {
             target.configurations.getByName("nativesWindows64")
         }, config)
 
@@ -60,44 +66,37 @@ open class ScapesEngineApplicationWindows : Plugin<Project> {
     }
 }
 
-fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
-                                  jars32: Ref<FileCollection>,
-                                  jars64: Ref<FileCollection>,
-                                  natives32: Ref<FileCollection>,
-                                  natives64: Ref<FileCollection>,
-                                  application: ScapesEngineApplicationExtension): List<Task> {
+fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
+                                  jars32: Provider<FileCollection>,
+                                  jars64: Provider<FileCollection>,
+                                  natives32: Provider<FileCollection>,
+                                  natives64: Provider<FileCollection>,
+                                  config: ScapesEngineApplicationExtension): List<Task> {
     val deployTasks = ArrayList<Task>()
 
-    val adoptOpenJDKVersion = Ref {
-        application.adoptOpenJDKVersion.resolveTo<String?>()
-                ?: throw IllegalStateException("No usable AdoptOpenJDK version")
-    }
-    val ojdkBuildVersion = Ref {
-        application.ojdkBuildVersion.resolveTo<Pair<String, String>>()
-                ?: throw IllegalStateException("No usable OJDKBuild version")
-    }
-
     // JRE Task 32-Bit
-    val (jreTask32, jre32) = ojdkBuildWindows(ojdkBuildVersion, "32")
+    val (jreTask32, jre32) = ojdkBuildWindows(
+            config.ojdkBuildVersionProvider, "32")
 
     // JRE Task 64-Bit
-    val (jreTask64, jre64) = adoptOpenJDKWindows(adoptOpenJDKVersion, "64")
+    val (jreTask64, jre64) = adoptOpenJDKWindows(
+            config.adoptOpenJDKVersionProvider, "64")
 
     // Program task
     val programTask = windowsProgramTask(false,
-            Ref { "${application.name}.exe" }, application, "programWindows",
-            Ref { application.workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false })
+            config.nameProvider.map { "$it.exe" }, config,
+            "programWindows", config.workingDirectoryInLibraryProvider)
 
     // Command task
     val programCmdTask = windowsProgramTask(true,
-            Ref { "${application.name}Cmd.exe" }, application,
-            "programWindowsCmd",
-            Ref { application.workingDirectoryInLibrary.resolveTo<Boolean?>() ?: false })
+            config.nameProvider.map { "${it}Cmd.exe" }, config,
+            "programCmdWindows", config.workingDirectoryInLibraryProvider)
 
     // Zip tasks
-    val deployWindowsZip32 = windowsZipTask(Ref { jars() + jars32() },
-            natives32,
-            Ref { files(programTask.output(), programCmdTask.output()) },
+    val deployWindowsZip32 = windowsZipTask(
+            map(jars, jars32) { a, b -> a + b }, natives32,
+            map(programTask.outputProvider,
+                    programCmdTask.outputProvider) { a, b -> files(a, b) },
             jre32, "deployWindowsZip32")
     deployWindowsZip32.dependsOn(jreTask32)
     deployWindowsZip32.dependsOn("jar")
@@ -106,13 +105,14 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
     deployWindowsZip32.group = "Deployment"
     deployWindowsZip32.description = "Zip for Windows with bundled JRE"
     afterEvaluate {
-        deployWindowsZip32.baseName = "${application.name}-Windows32"
+        deployWindowsZip32.baseName = "${config.name}-Windows32"
     }
     deployTasks.add(deployWindowsZip32)
 
-    val deployWindowsZip64 = windowsZipTask(Ref { jars() + jars64() },
-            natives64,
-            Ref { files(programTask.output(), programCmdTask.output()) },
+    val deployWindowsZip64 = windowsZipTask(
+            map(jars, jars64) { a, b -> a + b }, natives64,
+            map(programTask.outputProvider,
+                    programCmdTask.outputProvider) { a, b -> files(a, b) },
             jre64, "deployWindowsZip64")
     deployWindowsZip64.dependsOn(jreTask64)
     deployWindowsZip64.dependsOn("jar")
@@ -121,7 +121,7 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
     deployWindowsZip64.group = "Deployment"
     deployWindowsZip64.description = "Zip for Windows with bundled JRE"
     afterEvaluate {
-        deployWindowsZip64.baseName = "${application.name}-Windows64"
+        deployWindowsZip64.baseName = "${config.name}-Windows64"
     }
     deployTasks.add(deployWindowsZip64)
 
@@ -133,10 +133,10 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
     prepareTask.dependsOn("jar")
     prepareTask.dependsOn(programTask)
     prepareTask.dependsOn(programCmdTask)
-    prepareTask.from({ programTask.output() }.toClosure()) {
+    prepareTask.from(programTask.outputProvider.toClosure()) {
         it.into("install/common")
     }
-    prepareTask.from({ programCmdTask.output() }.toClosure()) {
+    prepareTask.from(programCmdTask.outputProvider.toClosure()) {
         it.into("install/common")
     }
 
@@ -148,8 +148,9 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
     }
 
     // Pack task
-    val packTask = windowsPackTask(Ref { prepareTask.temporaryDir },
-            innoEXE, application, "packWindows")
+    val packTask = windowsPackTask(
+            provider(prepareTask.temporaryDir),
+            innoEXE, config, "packWindows")
     packTask.dependsOn(prepareTask)
 
     // Main task
@@ -159,7 +160,7 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
     task.description = "Windows Installer with bundled JRE"
     task.from(File(prepareTask.temporaryDir, "output/output.exe"))
     task.rename({ str: String ->
-        "${application.name}-Setup-${project.version}.exe"
+        "${config.name}-Setup-${project.version}.exe"
     }.toClosure())
     task.into(File(buildDir, "distributions"))
     deployTasks.add(task)
@@ -167,38 +168,34 @@ fun Project.addDeployWindowsTasks(jars: Ref<FileCollection>,
 }
 
 fun Project.windowsProgramTask(cmd: Boolean,
-                               exeName: Ref<String>,
+                               exeName: Provider<String>,
                                config: ScapesEngineApplicationExtension,
                                taskName: String,
-                               workingDirInLibrary: Ref<Boolean>): Launch4jTask {
+                               workingDirInLibrary: Provider<Boolean>): Launch4jTask {
     val task = tasks.create(taskName, Launch4jTask::class.java)
-    task.fullName = Ref { "${config.fullName}" }
-    task.version = Ref { "${config.version}" }
-    task.company = Ref { "${config.company}" }
-    task.copyright = Ref { "${config.copyright}" }
-    task.mainClass = Ref { "${config.mainClass}" }
-    task.launch4j = Ref {
-        file("$rootDir/buildSrc/resources/Launch4j/launch4j.jar")
-    }
-    task.icon = Ref { file("project/Icon.ico") }
-    task.exeMemoryMin = Ref { 64 }
-    task.exeMemoryMax = Ref { 2048 }
-    task.exeType = Ref { if (cmd) "console" else "gui" }
-    task.runInAppData = workingDirInLibrary
-    task.manifest = Ref {
-        file("$rootDir/buildSrc/resources/Program.manifest")
-    }
-    task.output = Ref { File(task.temporaryDir, exeName()) }
+    task.fullNameProvider.set(config.fullNameProvider)
+    task.versionProvider.set(config.versionProvider)
+    task.companyProvider.set(config.companyProvider)
+    task.copyrightProvider.set(config.copyrightProvider)
+    task.mainClassProvider.set(config.mainClassProvider)
+    task.launch4j = file("$rootDir/buildSrc/resources/Launch4j/launch4j.jar")
+    task.icon = file("project/Icon.ico")
+    task.exeMemoryMin = 64
+    task.exeMemoryMax = 2048
+    task.exeType = if (cmd) "console" else "gui"
+    task.runInAppDataProvider.set(workingDirInLibrary)
+    task.manifest = file("$rootDir/buildSrc/resources/Program.manifest")
+    task.outputProvider.set(exeName.map { File(task.temporaryDir, it) })
     return task
 }
 
-fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
-                               jars32: Ref<FileCollection>,
-                               jars64: Ref<FileCollection>,
-                               natives32: Ref<FileCollection>,
-                               natives64: Ref<FileCollection>,
-                               jre32: Ref<File>,
-                               jre64: Ref<File>,
+fun Project.windowsPrepareTask(jars: Provider<FileCollection>,
+                               jars32: Provider<FileCollection>,
+                               jars64: Provider<FileCollection>,
+                               natives32: Provider<FileCollection>,
+                               natives64: Provider<FileCollection>,
+                               jre32: Provider<File>,
+                               jre64: Provider<File>,
                                taskName: String): Copy {
     val task = tasks.create(taskName, Copy::class.java)
     task.from(rootProject.file("buildSrc/resources/Setup.iss"))
@@ -212,13 +209,13 @@ fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
     task.from(jars64.toClosure()) {
         it.into("install/64/lib")
     }
-    task.from({ fetchNativesWindows(natives32()) }.toClosure()) {
+    task.from(natives32.map { fetchNativesWindows(it) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, "install", "32", fcp.name)
             fcp.mode = 493 // 755
         }
     }
-    task.from({ fetchNativesWindows(natives64()) }.toClosure()) {
+    task.from(natives64.map { fetchNativesWindows(it) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, "install", "64", fcp.name)
             fcp.mode = 493 // 755
@@ -236,14 +233,14 @@ fun Project.windowsPrepareTask(jars: Ref<FileCollection>,
     return task
 }
 
-fun Project.windowsZipTask(jars: Ref<FileCollection>,
-                           natives: Ref<FileCollection>,
-                           exes: Ref<FileCollection>,
-                           jre: Ref<File>,
+fun Project.windowsZipTask(jars: Provider<FileCollection>,
+                           natives: Provider<FileCollection>,
+                           exes: Provider<FileCollection>,
+                           jre: Provider<File>,
                            taskName: String): Zip {
     val task = tasks.create(taskName, Zip::class.java)
     task.from(jars.toClosure()) { it.into("lib") }
-    task.from({ fetchNativesWindows(natives()) }.toClosure()) {
+    task.from(natives.map { fetchNativesWindows(it) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
             fcp.relativePath = RelativePath(true, fcp.name)
             fcp.mode = 493 // 755
@@ -254,33 +251,26 @@ fun Project.windowsZipTask(jars: Ref<FileCollection>,
     return task
 }
 
-fun Project.windowsPackTask(dir: Ref<File>,
+fun Project.windowsPackTask(dir: Provider<File>,
                             innoEXE: File,
                             config: ScapesEngineApplicationExtension,
                             taskName: String): Exec {
 
     val task = tasks.create(taskName, Exec::class.java)
-    val innoArgs = arrayOf(Ref {
-        "/DApplicationFullName=${config.fullName.resolveToString()}"
-    }, Ref {
-        "/DApplicationVersion=${config.version.resolveToString()}"
-    }, Ref {
-        "/DApplicationCompany=${config.company.resolveToString()}"
-    }, Ref {
-        "/DApplicationCopyright=${config.copyright.resolveToString()}"
-    }, Ref {
-        "/DApplicationURL=${config.url.resolveToString()}"
-    }, Ref {
-        "/DApplicationUUID=${config.uuid.resolveToString()}"
-    }, Ref {
-        "/DApplicationName=${config.name.resolveToString()}"
-    })
-    val innoISS = Ref { File(dir(), "Setup.iss").absolutePath }
+    val innoArgs = arrayOf(
+            config.fullNameProvider.map { "/DApplicationFullName=$it" }.lazyString(),
+            config.versionProvider.map { "/DApplicationVersion=$it" }.lazyString(),
+            config.companyProvider.map { "/DApplicationCompany=$it" }.lazyString(),
+            config.copyrightProvider.map { "/DApplicationCopyright=$it" }.lazyString(),
+            config.urlProvider.map { "/DApplicationURL=$it" }.lazyString(),
+            config.uuidProvider.map { "/DApplicationUUID=$it" }.lazyString(),
+            config.nameProvider.map { "/DApplicationName=$it" }.lazyString())
+    val innoISS = dir.map { File(it, "Setup.iss").absolutePath }
     if (System.getProperty("os.name").toLowerCase().contains("win")) {
-        task.commandLine(innoEXE.absolutePath, *innoArgs, innoISS)
+        task.commandLine(innoEXE.absolutePath, *innoArgs, innoISS.lazyString())
     } else {
         task.commandLine("wine", innoEXE.absolutePath, *innoArgs,
-                Ref { "Z:$innoISS" })
+                innoISS.map { "Z:$it" }.lazyString())
     }
     return task
 }
