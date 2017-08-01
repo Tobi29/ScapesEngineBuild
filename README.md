@@ -1,13 +1,29 @@
 # Scapes Engine Build
-Build module for the [ScapesEngine](https://github.com/Tobi29/ScapesEngine)
+Build module for [ScapesEngine](https://github.com/Tobi29/ScapesEngine) based
+applications
 
-Includes support for deployment:
+## Features
+### Deployment
 * To Linux with simple tars to be processed by the package manager
 * To MacOSX using an app bundle distributed in a tar
-* To Windows using an Inno Setup based installer
+* To Windows using an Inno Setup based installer or extractable zips
 
-This repo is meant to be added as a submodule into `buildSrc` to make its
-classes available to the gradle scripts
+### Asset bundling
+`AssetBundler` task can bundle a directory into a binary tag structure
+to easy distribution (e.g. for assets stored on a web server)
+
+### Base64 embedding
+`Base64Embedder` turns a file into Kotlin source code, relying
+on some decoding utilities to allow bundling assets directly with code,
+specifically useful when compiling with Kotlin/JS.
+
+### NPM configuration
+`NpmConfigTask` creates an npm package configuration for exporting
+Kotlin/JS projects into a npm environment (e.g. for webpack).
+
+### Webpack configuration
+`WebpackConfigTask` creates a webpack configuration for deploying
+Kotlin/JS project to the browser.
 
 ## Deploy
 You can check the available deployment targets using the `task` target (in
@@ -45,3 +61,7 @@ Note: Windows deployment can take a long time due to compression, edit
       `buildSrc/resources/Inno Setup 5/ISCC.exe`!)
     * Make sure to have a working Wine prefix when building
   * Run `tasks` target to check if `deployWindows` is available
+
+## JavaScript
+
+The npm and webpack tasks rely on working `npm` and `node` commands on the path.
