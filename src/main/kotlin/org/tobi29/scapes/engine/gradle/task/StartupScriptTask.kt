@@ -54,9 +54,6 @@ open class StartupScriptTask : DefaultTask() {
 
     @TaskAction
     fun run() {
-        val execName = execName
-        val libPath = libPath
-        val mainClass = mainClass
         output.printWriter().use { writer: PrintWriter ->
             writer.println("#!/bin/bash")
             if (workingDirInLibrary) {

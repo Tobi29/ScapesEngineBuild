@@ -71,7 +71,6 @@ ext {
 }
 
 apply from: "$rootDir/resources/scapesenginemodulekotlinjvmnotest.gradle"
-apply plugin: "idea"
 
 group = "com.github.Tobi29"
 
@@ -82,11 +81,4 @@ dependencies {
     compile rootProject.ext.scapesEngineTagStructureJSONJVM
     compile rootProject.ext.shadow
     compile rootProject.ext.downloadTask
-}
-
-idea {
-    module {
-        excludeDirs += file("resources/Inno Setup 5")
-        excludeDirs += file("resources/Launch4j")
-    }
 }

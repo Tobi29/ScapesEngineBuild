@@ -26,7 +26,9 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.script.lang.kotlin.task
 import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
+import org.tobi29.scapes.engine.gradle.task.ClasspathExtractTask
 import org.tobi29.scapes.engine.gradle.task.Launch4jTask
 import java.io.File
 
@@ -82,15 +84,35 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
     val (jreTask64, jre64) = adoptOpenJDKWindows(
             config.adoptOpenJDKVersionProvider, "64")
 
+    // Program manifest extract task
+    val programManifestExtractTask = task<ClasspathExtractTask>(
+            "programManifestExtractWindows") {
+        resourcePath = "Launch4j/Program.manifest"
+        output = temporaryDir.resolve("Program.manifest")
+    }
+
+    // Inno setup script extract task
+    val innoSetupScriptExtractTask = task<ClasspathExtractTask>(
+            "innoSetupScriptExtractWindows") {
+        resourcePath = "InnoSetup/Setup.iss"
+        output = temporaryDir.resolve("Setup.iss")
+    }
+
     // Program task
     val programTask = windowsProgramTask(false,
             config.nameProvider.map { "$it.exe" }, config,
-            "programWindows", config.workingDirectoryInLibraryProvider)
+            config.workingDirectoryInLibraryProvider,
+            programManifestExtractTask.outputProvider,
+            "programWindows")
+    programTask.dependsOn(programManifestExtractTask)
 
     // Command task
     val programCmdTask = windowsProgramTask(true,
             config.nameProvider.map { "${it}Cmd.exe" }, config,
-            "programCmdWindows", config.workingDirectoryInLibraryProvider)
+            config.workingDirectoryInLibraryProvider,
+            programManifestExtractTask.outputProvider,
+            "programCmdWindows")
+    programCmdTask.dependsOn(programManifestExtractTask)
 
     // Zip tasks
     val deployWindowsZip32 = windowsZipTask(
@@ -127,9 +149,11 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
 
     // Prepare task
     val prepareTask = windowsPrepareTask(jars, jars32, jars64, natives32,
-            natives64, jre32, jre64, "prepareWindows")
+            natives64, jre32, jre64, innoSetupScriptExtractTask.outputProvider,
+            "prepareWindows")
     prepareTask.dependsOn(jreTask32)
     prepareTask.dependsOn(jreTask64)
+    prepareTask.dependsOn(innoSetupScriptExtractTask)
     prepareTask.dependsOn("jar")
     prepareTask.dependsOn(programTask)
     prepareTask.dependsOn(programCmdTask)
@@ -140,8 +164,7 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
         it.into("install/common")
     }
 
-    val innoEXE = rootProject.file(
-            "buildSrc/resources/Inno Setup 5/ISCC.exe")
+    val innoEXE = rootProject.file("resources/Inno Setup 5/ISCC.exe")
     if (!innoEXE.exists()) {
         logger.warn("No Inno Setup for Windows found!")
         return deployTasks
@@ -170,21 +193,22 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
 fun Project.windowsProgramTask(cmd: Boolean,
                                exeName: Provider<String>,
                                config: ScapesEngineApplicationExtension,
-                               taskName: String,
-                               workingDirInLibrary: Provider<Boolean>): Launch4jTask {
+                               workingDirInLibrary: Provider<Boolean>,
+                               manifest: Provider<File>,
+                               taskName: String): Launch4jTask {
     val task = tasks.create(taskName, Launch4jTask::class.java)
     task.fullNameProvider.set(config.fullNameProvider)
     task.versionProvider.set(config.versionProvider)
     task.companyProvider.set(config.companyProvider)
     task.copyrightProvider.set(config.copyrightProvider)
     task.mainClassProvider.set(config.mainClassProvider)
-    task.launch4j = file("$rootDir/buildSrc/resources/Launch4j/launch4j.jar")
+    task.launch4j = rootProject.file("resources/Launch4j/launch4j.jar")
     task.icon = file("project/Icon.ico")
     task.exeMemoryMin = 64
     task.exeMemoryMax = 2048
     task.exeType = if (cmd) "console" else "gui"
     task.runInAppDataProvider.set(workingDirInLibrary)
-    task.manifest = file("$rootDir/buildSrc/resources/Program.manifest")
+    task.manifestProvider.set(manifest)
     task.outputProvider.set(exeName.map { File(task.temporaryDir, it) })
     return task
 }
@@ -196,9 +220,10 @@ fun Project.windowsPrepareTask(jars: Provider<FileCollection>,
                                natives64: Provider<FileCollection>,
                                jre32: Provider<File>,
                                jre64: Provider<File>,
+                               iss: Provider<File>,
                                taskName: String): Copy {
     val task = tasks.create(taskName, Copy::class.java)
-    task.from(rootProject.file("buildSrc/resources/Setup.iss"))
+    task.from(iss.toClosure())
     task.from(file("project/installer"))
     task.from(jars.toClosure()) {
         it.into("install/common/lib")
@@ -227,8 +252,9 @@ fun Project.windowsPrepareTask(jars: Provider<FileCollection>,
     task.from(jre64.toClosure()) {
         it.into("install/64/jre")
     }
-    task.from(rootProject.file(
-            "buildSrc/resources/Install/Windows")) { it.into("install") }
+    task.from(rootProject.file("resources/Install/Windows")) {
+        it.into("install")
+    }
     task.into(task.temporaryDir)
     return task
 }
@@ -255,7 +281,6 @@ fun Project.windowsPackTask(dir: Provider<File>,
                             innoEXE: File,
                             config: ScapesEngineApplicationExtension,
                             taskName: String): Exec {
-
     val task = tasks.create(taskName, Exec::class.java)
     val innoArgs = arrayOf(
             config.fullNameProvider.map { "/DApplicationFullName=$it" }.lazyString(),
@@ -265,12 +290,14 @@ fun Project.windowsPackTask(dir: Provider<File>,
             config.urlProvider.map { "/DApplicationURL=$it" }.lazyString(),
             config.uuidProvider.map { "/DApplicationUUID=$it" }.lazyString(),
             config.nameProvider.map { "/DApplicationName=$it" }.lazyString())
-    val innoISS = dir.map { File(it, "Setup.iss").absolutePath }
+    val commandLine = arrayOf(innoEXE.absolutePath, *innoArgs, "Setup.iss")
     if (System.getProperty("os.name").toLowerCase().contains("win")) {
-        task.commandLine(innoEXE.absolutePath, *innoArgs, innoISS.lazyString())
+        task.commandLine(*commandLine)
     } else {
-        task.commandLine("wine", innoEXE.absolutePath, *innoArgs,
-                innoISS.map { "Z:$it" }.lazyString())
+        task.commandLine("wine", *commandLine)
+    }
+    afterEvaluate {
+        task.workingDir = dir.get()
     }
     return task
 }

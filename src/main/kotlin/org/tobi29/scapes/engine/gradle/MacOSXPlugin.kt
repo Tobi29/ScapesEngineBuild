@@ -16,6 +16,7 @@
 
 package org.tobi29.scapes.engine.gradle
 
+import ApplicationType
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -26,9 +27,9 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
 import org.gradle.script.lang.kotlin.task
-import ApplicationType
 import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
 import org.tobi29.scapes.engine.gradle.task.AppPListTask
+import org.tobi29.scapes.engine.gradle.task.ClasspathExtractTask
 import org.tobi29.scapes.engine.gradle.task.JREPListTask
 
 open class ScapesEngineApplicationMacOSX : Plugin<Project> {
@@ -68,6 +69,20 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
     val (jreTask, jre) = adoptOpenJDKMacOSX(
             config.adoptOpenJDKVersionProvider)
 
+    // Launcher extract task
+    val launcherExtractTask = task<ClasspathExtractTask>(
+            "launcherExtractMacOSX") {
+        resourcePath = "AppBundler/JavaAppLauncher"
+        outputProvider.set(config.nameProvider.map { temporaryDir.resolve(it) })
+    }
+
+    // Localizable extract task
+    val localizableExtractTask = task<ClasspathExtractTask>(
+            "localizableExtractMacOSX") {
+        resourcePath = "AppBundler/Localizable.strings"
+        output = temporaryDir.resolve("Localizable.strings")
+    }
+
     // App plist task
     val appPListTask = task<AppPListTask>("appPListMacOSX") {
         plistProvider.set(provider { config.generatePList() })
@@ -79,7 +94,6 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
             adoptOpenJDKPList(it)
         })
     }
-
 
     // Main task
     val task = task<Tar>("deployMacOSX") {
@@ -109,6 +123,15 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
         from(jrePListTask.plistFileProvider.toClosure()) {
             it.into(plugInsDir.map { "$it/JRE.jre/Contents" }.toClosure())
         }
+        from({ launcherExtractTask.output }.toClosure()) {
+            it.eachFile { fcp: FileCopyDetails ->
+                fcp.mode = 493 // 755
+            }
+            it.into(macOSDir.toClosure())
+        }
+        from({ localizableExtractTask.output }.toClosure()) {
+            it.into(resourcesDir.map { "$it/en.lproj" }.toClosure())
+        }
         from(natives.map { fetchNativesMacOSX(it) }.toClosure()) {
             it.eachFile { fcp: FileCopyDetails ->
                 fcp.relativePath = RelativePath(true, macOSDir.get(), fcp.name)
@@ -117,18 +140,7 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
             it.includeEmptyDirs = false
         }
         from({
-            rootProject.files("buildSrc/resources/AppBundler/JavaAppLauncher")
-        }.toClosure()) {
-            it.eachFile { fcp: FileCopyDetails ->
-                fcp.relativePath = RelativePath(true, macOSDir.get(),
-                        config.name)
-                fcp.mode = 493 // 755
-            }
-            it.includeEmptyDirs = false
-        }
-        from({
-            files("project/Icon.icns") +
-                    rootProject.files("buildSrc/resources/AppBundler/Resources")
+            files("project/Icon.icns")
         }.toClosure()) {
             it.into(resourcesDir.toClosure())
         }
@@ -143,6 +155,8 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
             "Mac OS X Application containing necessary files to run the game"
     task.group = "Deployment"
     task.dependsOn(jreTask)
+    task.dependsOn(launcherExtractTask)
+    task.dependsOn(localizableExtractTask)
     task.dependsOn(appPListTask)
     task.dependsOn(jrePListTask)
     task.dependsOn("jar")
