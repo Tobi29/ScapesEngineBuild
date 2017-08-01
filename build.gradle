@@ -25,6 +25,9 @@ buildscript {
         maven {
             url "https://dl.bintray.com/kotlin/kotlin-dev"
         }
+        maven {
+            url "https://jitpack.io"
+        }
     }
 
     dependencies {
@@ -47,7 +50,9 @@ allprojects {
         maven {
             url "https://dl.bintray.com/kotlin/kotlin-dev"
         }
-        mavenLocal()
+        maven {
+            url "https://jitpack.io"
+        }
     }
 }
 
