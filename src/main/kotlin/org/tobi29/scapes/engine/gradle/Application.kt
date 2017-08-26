@@ -53,7 +53,8 @@ open class ScapesEngineApplication : Plugin<Project> {
         target.afterEvaluate {
             runTask.main = config.mainClass
             runTask.classpath = javaConvention.sourceSets
-                    .getByName("main").runtimeClasspath
+                    .getByName("main").runtimeClasspath +
+                    runtimeConfigurations.platform
         }
         runTask.jvmArgs("-Xms64M", "-Xmx2048M", "-XX:+UseG1GC",
                 "-XX:MaxGCPauseMillis=1")
