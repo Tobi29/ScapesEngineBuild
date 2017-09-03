@@ -23,7 +23,7 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Copy
-import org.gradle.script.lang.kotlin.task
+import org.gradle.kotlin.dsl.task
 import java.io.File
 import java.net.URL
 

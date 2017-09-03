@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import org.gradle.script.lang.kotlin.ProjectExtensionsKt as gskp
+import org.gradle.kotlin.dsl.ProjectExtensionsKt as gskp
 
 buildscript {
     def kotlinVersion = "1.1.4-eap-54"
@@ -57,7 +57,7 @@ allprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.0.2"
+    gradleVersion = "4.1"
     distributionUrl =
             "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
@@ -80,7 +80,7 @@ apply from: "$rootDir/resources/scapesenginemodulekotlinjvmnotest.gradle"
 group = "com.github.Tobi29"
 
 dependencies {
-    compile gskp.gradleScriptKotlinApi(project)
+    compile gskp.gradleKotlinDsl(project)
     compile rootProject.ext.kotlinSTDJVM
     compile rootProject.ext.scapesEngineIOUtilsJVM
     compile rootProject.ext.scapesEngineTagStructureJSONJVM

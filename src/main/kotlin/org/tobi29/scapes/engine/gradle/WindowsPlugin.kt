@@ -26,7 +26,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.bundling.Zip
-import org.gradle.script.lang.kotlin.task
+import org.gradle.kotlin.dsl.task
 import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
 import org.tobi29.scapes.engine.gradle.task.ClasspathExtractTask
 import org.tobi29.scapes.engine.gradle.task.Launch4jTask

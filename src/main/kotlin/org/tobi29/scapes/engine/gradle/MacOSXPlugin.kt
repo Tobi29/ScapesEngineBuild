@@ -26,7 +26,7 @@ import org.gradle.api.file.RelativePath
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
-import org.gradle.script.lang.kotlin.task
+import org.gradle.kotlin.dsl.task
 import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
 import org.tobi29.scapes.engine.gradle.task.AppPListTask
 import org.tobi29.scapes.engine.gradle.task.ClasspathExtractTask

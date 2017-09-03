@@ -21,10 +21,10 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.tobi29.scapes.engine.gradle.getValue
+import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.setValue
 import org.tobi29.scapes.engine.gradle.invoke
 import org.tobi29.scapes.engine.gradle.property
-import org.tobi29.scapes.engine.gradle.setValue
 import java.io.File
 
 open class Launch4jTask : DefaultTask() {

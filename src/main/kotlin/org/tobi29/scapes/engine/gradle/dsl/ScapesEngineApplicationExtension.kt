@@ -2,9 +2,9 @@ package org.tobi29.scapes.engine.gradle.dsl
 
 import ApplicationType
 import org.gradle.api.Project
-import org.tobi29.scapes.engine.gradle.getValue
+import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.setValue
 import org.tobi29.scapes.engine.gradle.property
-import org.tobi29.scapes.engine.gradle.setValue
 
 open class ScapesEngineApplicationExtension(target: Project) {
     val nameProvider = target.property<String>()

@@ -3,17 +3,9 @@ package org.tobi29.scapes.engine.gradle
 import org.gradle.api.Project
 import org.gradle.api.provider.PropertyState
 import org.gradle.api.provider.Provider
-import kotlin.reflect.KProperty
 
 inline fun <reified T> Project.property(): PropertyState<T> =
         property(T::class.java)
-
-operator fun <T> PropertyState<T>.getValue(receiver: Any,
-                                           property: KProperty<*>): T = get()
-
-operator fun <T> PropertyState<T>.setValue(receiver: Any,
-                                           property: KProperty<*>,
-                                           value: T) = set(value)
 
 fun <T, M> Provider<T>.map(block: (T) -> M): Provider<M> = object : Provider<M> {
     override fun isPresent() = this@map.isPresent()

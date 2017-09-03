@@ -5,9 +5,9 @@ import org.gradle.api.file.FileVisitor
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.tobi29.scapes.engine.gradle.getValue
+import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.setValue
 import org.tobi29.scapes.engine.gradle.property
-import org.tobi29.scapes.engine.gradle.setValue
 import org.tobi29.scapes.engine.utils.io.BufferedWriteChannelStream
 import org.tobi29.scapes.engine.utils.io.tag.binary.writeBinary
 import org.tobi29.scapes.engine.utils.tag.MutableTagMap

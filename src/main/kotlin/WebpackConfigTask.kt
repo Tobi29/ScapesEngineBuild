@@ -18,9 +18,9 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.tobi29.scapes.engine.gradle.getValue
+import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.setValue
 import org.tobi29.scapes.engine.gradle.property
-import org.tobi29.scapes.engine.gradle.setValue
 import java.io.File
 
 open class WebpackConfigTask : DefaultTask() {
