@@ -17,7 +17,7 @@
 import org.gradle.kotlin.dsl.ProjectExtensionsKt as gskp
 
 buildscript {
-    def kotlinVersion = "1.1.4-eap-54"
+    def kotlinVersion = "1.1.4-3"
     def dokkaVersion = "0.9.14"
 
     repositories {
@@ -63,7 +63,7 @@ task wrapper(type: Wrapper) {
 }
 
 ext {
-    kotlinVersion = "1.1.4-eap-54"
+    kotlinVersion = "1.1.4-3"
     scapesEngineVersion = "0.0.1"
     shadowVersion = "2.0.0"
     downloadTaskVersion = "3.2.0"
