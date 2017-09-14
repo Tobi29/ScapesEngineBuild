@@ -64,7 +64,7 @@ task wrapper(type: Wrapper) {
 
 ext {
     kotlinVersion = "1.1.4-3"
-    scapesEngineVersion = "0.0.1"
+    scapesEngineVersion = "0.0.4"
     shadowVersion = "2.0.0"
     downloadTaskVersion = "3.2.0"
 
