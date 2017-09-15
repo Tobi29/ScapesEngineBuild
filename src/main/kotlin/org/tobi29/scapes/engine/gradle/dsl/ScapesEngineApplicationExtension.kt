@@ -55,7 +55,7 @@ open class ScapesEngineApplicationExtension(target: Project) {
     var adoptOpenJDKVersion by adoptOpenJDKVersionProvider
 
     val ojdkBuildVersionProvider = target.property<Pair<String, String>>()
-            .apply { set(Pair("1.8.0.131-1", "1.8.0.131-1.b11")) }
+            .apply { set(Pair("1.8.0.141-1", "1.8.0.141-1.b16")) }
 
     var ojdkBuildVersion by ojdkBuildVersionProvider
 }
