@@ -32,18 +32,16 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
         // Platform deploy tasks
         val deployLinuxTask32 = target.addDeployLinuxExtensionTask("32",
                 provider {
-                    target.allJars("Linux32") - config.parent?.allJars(
-                            "Linux32")
+                    target.allJars("Linux32") - config.parent.allJars("Linux32")
                 }, provider {
             target.configurations.getByName("nativesLinux32")
-        }, getName(target.parent), config)
+        }, getName(config.parentProvider), config)
         val deployLinuxTask64 = target.addDeployLinuxExtensionTask("64",
                 provider {
-                    target.allJars("Linux64") - config.parent?.allJars(
-                            "Linux64")
+                    target.allJars("Linux64") - config.parent.allJars("Linux64")
                 }, provider {
             target.configurations.getByName("nativesLinux64")
-        }, getName(target.parent), config)
+        }, getName(config.parentProvider), config)
 
         // Full deploy task
         val deployTask = target.tasks.getByName("deploy")
@@ -57,18 +55,18 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
 }
 
 private fun getName(
-        project: Project?,
+        project: Provider<Project>,
         default: Provider<String> = provider("INVALID")
-): Provider<String> {
-    project?.extensions?.findByType(
+) = project.map { project ->
+    project.extensions?.findByType(
             ScapesEngineExtensionExtension::class.java)?.let { config ->
-        return config.nameProvider
+        return@map config.name
     }
-    project?.extensions?.findByType(
+    project.extensions?.findByType(
             ScapesEngineApplicationExtension::class.java)?.let { config ->
-        return config.nameProvider
+        return@map config.name
     }
-    return default
+    return@map default.get()
 }
 
 fun Project.addDeployLinuxExtensionTask(arch: String,
