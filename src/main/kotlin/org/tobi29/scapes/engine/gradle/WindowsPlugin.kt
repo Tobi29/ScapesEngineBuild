@@ -81,8 +81,11 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
             config.ojdkBuildVersionProvider, "32")
 
     // JRE Task 64-Bit
-    val (jreTask64, jre64) = adoptOpenJDKWindows(
-            config.adoptOpenJDKVersionProvider, "64")
+    // TODO: AdoptOpenJDK does not include a proper cacerts file on windows
+    // val (jreTask64, jre64) = adoptOpenJDKWindows(
+    //         config.adoptOpenJDKVersionProvider, "64")
+    val (jreTask64, jre64) = ojdkBuildWindows(
+            config.ojdkBuildVersionProvider, "64")
 
     // Program manifest extract task
     val programManifestExtractTask = task<ClasspathExtractTask>(
