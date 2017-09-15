@@ -36,7 +36,7 @@ fun Project.adoptOpenJDKMacOSX(version: Provider<String>) =
 fun Project.adoptOpenJDKMacOSX(version: Provider<String>,
                                release: Provider<String>) =
         jdk("MacOSX", release,
-                provider("./j2sdk-image"), "./j2sdk-image",
+                version.map { "./$it" }, "./*",
                 map(version, release) { a, b ->
                     adoptOpenJDKURL(a, b, "tar.gz")
                 },
@@ -58,7 +58,7 @@ fun Project.adoptOpenJDKWindows(version: Provider<String>,
                                 release: Provider<String>,
                                 arch: String) =
         jdk("Windows$arch", release,
-                provider("j2sdk-image"), "j2sdk-image",
+                version.map { "./$it" }, "*",
                 map(version, release) { a, b ->
                     adoptOpenJDKURL(a, b, "zip")
                 },

@@ -50,7 +50,7 @@ open class ScapesEngineApplicationExtension(target: Project) {
     var workingDirectoryInLibrary by workingDirectoryInLibraryProvider
 
     val adoptOpenJDKVersionProvider = target.property<String>()
-            .apply { set("jdk8u152-b04") }
+            .apply { set("jdk8u144-b01") }
 
     var adoptOpenJDKVersion by adoptOpenJDKVersionProvider
 
