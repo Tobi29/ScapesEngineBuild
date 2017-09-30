@@ -36,21 +36,21 @@ open class ScapesEngineApplicationLinux : Plugin<Project> {
 
         // Platform deploy tasks
         val deployLinuxTask32 = target.addDeployLinuxTask("32",
-                provider {
+                target.providers.provider {
                     target.configurations.getByName("runtime") + target.files(
                             target.tasks.getByName(
                                     "jar")) + target.configurations.getByName(
                             "runtimeLinux32")
-                }, provider {
+                }, target.providers.provider {
             target.configurations.getByName("nativesLinux32")
         }, config)
         val deployLinuxTask64 = target.addDeployLinuxTask("64",
-                provider {
+                target.providers.provider {
                     target.configurations.getByName("runtime") + target.files(
                             target.tasks.getByName(
                                     "jar")) + target.configurations.getByName(
                             "runtimeLinux64")
-                }, provider {
+                }, target.providers.provider {
             target.configurations.getByName("nativesLinux64")
         }, config)
 
@@ -98,7 +98,7 @@ fun Project.addDeployLinuxTask(arch: String,
 
     // Main task
     val task = linuxTarTask(libDir,
-            provider(binPath), "Linux$arch", jars,
+            providers.provider(binPath), "Linux$arch", jars,
             natives,
             scriptTask.outputProvider,
             config.nameProvider,

@@ -1,13 +1,20 @@
 package org.tobi29.scapes.engine.gradle
 
 import org.gradle.api.Project
+import org.gradle.api.internal.provider.ProviderInternal
 import org.gradle.api.provider.PropertyState
 import org.gradle.api.provider.Provider
+import org.gradle.api.provider.ProviderFactory
 
 inline fun <reified T> Project.property(): PropertyState<T> =
         property(T::class.java)
 
-fun <T, M> Provider<T>.map(block: (T) -> M): Provider<M> = object : Provider<M> {
+// TODO: Using internal API, how resolve?
+inline fun <T, reified M> Provider<T>.map(
+        crossinline block: (T) -> M
+): Provider<M> = object : ProviderInternal<M> {
+    override fun getType() = M::class.java
+
     override fun isPresent() = this@map.isPresent()
 
     override fun get() = block(this@map.get())
@@ -15,9 +22,14 @@ fun <T, M> Provider<T>.map(block: (T) -> M): Provider<M> = object : Provider<M> 
     override fun getOrNull() = this@map.getOrNull()?.let { block(it) }
 }
 
-fun <L, R, M> map(left: Provider<L>,
-                  right: Provider<R>,
-                  fold: (L, R) -> M): Provider<M> = object : Provider<M> {
+// TODO: Using internal API, how resolve?
+inline fun <L, R, reified M> map(
+        left: Provider<L>,
+        right: Provider<R>,
+        crossinline fold: (L, R) -> M
+): Provider<M> = object : ProviderInternal<M> {
+    override fun getType() = M::class.java
+
     override fun isPresent() = left.isPresent() && right.isPresent()
 
     override fun get() = fold(left.get(), right.get())
@@ -29,31 +41,8 @@ fun <L, R, M> map(left: Provider<L>,
     }
 }
 
-fun <T> provider(value: T) = object : Provider<T> {
-    override fun isPresent() = true
+fun <T> ProviderFactory.provider(value: T): Provider<T> = provider { value }
 
-    override fun get() = value
+fun <T> Provider<T>.lazyString(): Provider<String> = map { toString() }
 
-    override fun getOrNull() = value
-}
-
-fun <T> provider(block: () -> T) = object : Provider<T> {
-    override fun isPresent() = true
-
-    override fun get() = block()
-
-    override fun getOrNull() = block()
-}
-
-fun <T> Provider<T>.lazyString(): Provider<String> = object : Provider<String> {
-    override fun isPresent() = this@lazyString.isPresent()
-
-    override fun get() = this@lazyString.get().toString()
-
-    override fun getOrNull() = this@lazyString.getOrNull()?.toString()
-
-    override fun toString() = get()
-}
-
-// TODO: Implement without Ref
 fun <T> Provider<T>.toClosure() = { get() }.toClosure()

@@ -18,7 +18,7 @@ import org.gradle.kotlin.dsl.ProjectExtensionsKt as gskp
 
 buildscript {
     def kotlinVersion = "1.1.4-3"
-    def dokkaVersion = "0.9.14"
+    def dokkaVersion = "0.9.15"
 
     repositories {
         jcenter()
@@ -50,6 +50,7 @@ allprojects {
         maven {
             url "https://dl.bintray.com/kotlin/kotlin-dev"
         }
+        mavenCentral()
         maven {
             url "https://jitpack.io"
         }
@@ -57,14 +58,14 @@ allprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.1"
+    gradleVersion = "4.2"
     distributionUrl =
             "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
 
 ext {
     kotlinVersion = "1.1.4-3"
-    scapesEngineVersion = "0.0.4"
+    scapesEngineVersion = "0.0.6"
     shadowVersion = "2.0.0"
     downloadTaskVersion = "3.2.0"
 

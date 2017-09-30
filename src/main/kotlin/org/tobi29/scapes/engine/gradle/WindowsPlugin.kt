@@ -39,15 +39,15 @@ open class ScapesEngineApplicationWindows : Plugin<Project> {
 
         // Platform deploy task
         val deployWindowsTasks = target.addDeployWindowsTasks(
-                provider {
+                target.providers.provider {
                     target.allCommonJars()
-                }, provider {
+                }, target.providers.provider {
             target.configurations.getByName("runtimeWindows32")
-        }, provider {
+        }, target.providers.provider {
             target.configurations.getByName("runtimeWindows64")
-        }, provider {
+        }, target.providers.provider {
             target.configurations.getByName("nativesWindows32")
-        }, provider {
+        }, target.providers.provider {
             target.configurations.getByName("nativesWindows64")
         }, config)
 
@@ -175,7 +175,7 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
 
     // Pack task
     val packTask = windowsPackTask(
-            provider(prepareTask.temporaryDir),
+            providers.provider(prepareTask.temporaryDir),
             innoEXE, config, "packWindows")
     packTask.dependsOn(prepareTask)
 

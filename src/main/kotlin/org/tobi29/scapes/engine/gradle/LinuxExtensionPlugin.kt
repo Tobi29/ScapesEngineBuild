@@ -31,15 +31,15 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
 
         // Platform deploy tasks
         val deployLinuxTask32 = target.addDeployLinuxExtensionTask("32",
-                provider {
+                target.providers.provider {
                     target.allJars("Linux32") - config.parent.allJars("Linux32")
-                }, provider {
+                }, target.providers.provider {
             target.configurations.getByName("nativesLinux32")
         }, getName(config.parentProvider), config)
         val deployLinuxTask64 = target.addDeployLinuxExtensionTask("64",
-                provider {
+                target.providers.provider {
                     target.allJars("Linux64") - config.parent.allJars("Linux64")
-                }, provider {
+                }, target.providers.provider {
             target.configurations.getByName("nativesLinux64")
         }, getName(config.parentProvider), config)
 
@@ -55,18 +55,18 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
 }
 
 private fun getName(
-        project: Provider<Project>,
-        default: Provider<String> = provider("INVALID")
+        project: Provider<Project>
 ) = project.map { project ->
-    project.extensions?.findByType(
+    project.extensions.findByType(
             ScapesEngineExtensionExtension::class.java)?.let { config ->
         return@map config.name
     }
-    project.extensions?.findByType(
+    project.extensions.findByType(
             ScapesEngineApplicationExtension::class.java)?.let { config ->
         return@map config.name
     }
-    return@map default.get()
+    throw IllegalArgumentException(
+            "Parent project is not extension or application")
 }
 
 fun Project.addDeployLinuxExtensionTask(arch: String,

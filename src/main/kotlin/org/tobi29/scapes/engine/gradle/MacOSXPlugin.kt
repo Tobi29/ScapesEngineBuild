@@ -40,9 +40,9 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
 
         // Platform deploy task
         val deployMacOSXTask = target.addDeployMacOSXTask(
-                provider {
+                target.providers.provider {
                     target.allJars("MacOSX")
-                }, provider<FileCollection> {
+                }, target.providers.provider<FileCollection> {
             target.configurations.getByName("nativesMacOSX")
         }, config)
 
