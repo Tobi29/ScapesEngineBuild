@@ -17,7 +17,7 @@
 import org.gradle.kotlin.dsl.ProjectExtensionsKt as gskp
 
 buildscript {
-    def kotlinVersion = "1.1.4-3"
+    def kotlinVersion = "1.2.0-rc-83"
     def dokkaVersion = "0.9.15"
 
     repositories {
@@ -50,7 +50,6 @@ allprojects {
         maven {
             url "https://dl.bintray.com/kotlin/kotlin-dev"
         }
-        mavenCentral()
         maven {
             url "https://jitpack.io"
         }
@@ -64,14 +63,11 @@ task wrapper(type: Wrapper) {
 }
 
 ext {
-    kotlinVersion = "1.1.4-3"
-    scapesEngineVersion = "0.0.6"
-    shadowVersion = "2.0.0"
-    downloadTaskVersion = "3.2.0"
+    scapesEngineVersion = "0.0.9"
+    shadowVersion = "2.0.1"
+    downloadTaskVersion = "3.3.0"
 
-    kotlinSTDJVM = "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     scapesEngineIOUtilsJVM = "com.github.Tobi29.ScapesEngine:IOUtilsJVM:$scapesEngineVersion"
-    scapesEngineTagStructureJSONJVM = "com.github.Tobi29.ScapesEngine:TagStructureJSONJVM:$scapesEngineVersion"
     shadow = "com.github.jengelman.gradle.plugins:shadow:$shadowVersion"
     downloadTask = "de.undercouch:gradle-download-task:$downloadTaskVersion"
 }
@@ -82,9 +78,7 @@ group = "com.github.Tobi29"
 
 dependencies {
     compile gskp.gradleKotlinDsl(project)
-    compile rootProject.ext.kotlinSTDJVM
     compile rootProject.ext.scapesEngineIOUtilsJVM
-    compile rootProject.ext.scapesEngineTagStructureJSONJVM
     compile rootProject.ext.shadow
     compile rootProject.ext.downloadTask
 }

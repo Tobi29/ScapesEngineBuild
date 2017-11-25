@@ -55,13 +55,14 @@ open class Base64Embedder : DefaultTask() {
             writer.print("""package $codePackage
 
 import org.tobi29.scapes.engine.utils.fromBase64
-import org.tobi29.scapes.engine.utils.io.ByteBuffer
-import org.tobi29.scapes.engine.utils.io.tag.TagBundleResource
+import org.tobi29.scapes.engine.utils.io.HeapResource
+import org.tobi29.scapes.engine.utils.io.ro
+import org.tobi29.scapes.engine.utils.io.view
 
 val $codeName by lazy {
-    TagBundleResource(
+    HeapResource(
             ("$base64")
-            .fromBase64().let { ByteBuffer(it.size).apply { put(it).flip() } })
+            .fromBase64().view.ro)
 }
 """)
         }

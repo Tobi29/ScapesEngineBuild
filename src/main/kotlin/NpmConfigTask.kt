@@ -23,6 +23,7 @@ import org.gradle.kotlin.dsl.setValue
 import org.tobi29.scapes.engine.gradle.property
 import org.tobi29.scapes.engine.utils.io.BufferedWriteChannelStream
 import org.tobi29.scapes.engine.utils.io.tag.json.writeJSON
+import org.tobi29.scapes.engine.utils.io.toChannel
 import org.tobi29.scapes.engine.utils.tag.MutableTagMap
 import org.tobi29.scapes.engine.utils.tag.mapMut
 import org.tobi29.scapes.engine.utils.tag.toTag
@@ -99,7 +100,7 @@ open class NpmConfigTask : DefaultTask() {
             it.parentFile.mkdirs()
         }.toPath(), StandardOpenOption.WRITE,
                 StandardOpenOption.CREATE).use { channel ->
-            val stream = BufferedWriteChannelStream(channel)
+            val stream = BufferedWriteChannelStream(channel.toChannel())
             config.toTag().writeJSON(stream)
             stream.flush()
         }
