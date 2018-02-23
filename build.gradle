@@ -17,7 +17,7 @@
 import org.gradle.kotlin.dsl.ProjectExtensionsKt as gskp
 
 buildscript {
-    def kotlinVersion = "1.2.0-rc-83"
+    def kotlinVersion = "1.2.21"
     def dokkaVersion = "0.9.15"
 
     repositories {
@@ -57,19 +57,28 @@ allprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.2"
+    gradleVersion = "4.4.1"
     distributionUrl =
             "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
 
 ext {
-    scapesEngineVersion = "0.0.9"
-    shadowVersion = "2.0.1"
-    downloadTaskVersion = "3.3.0"
 
-    scapesEngineIOUtilsJVM = "com.github.Tobi29.ScapesEngine:IOUtilsJVM:$scapesEngineVersion"
-    shadow = "com.github.jengelman.gradle.plugins:shadow:$shadowVersion"
-    downloadTask = "de.undercouch:gradle-download-task:$downloadTaskVersion"
+    scapesEngineVersion = "0.0.10"
+    scapesEngine = { module ->
+        "com.github.Tobi29.ScapesEngine:$module:$scapesEngineVersion"
+    }
+    scapesEngineJVM = { module -> scapesEngine("${module}JVM") }
+
+    shadowVersion = "2.0.1"
+    shadowJVM = { module ->
+        "com.github.jengelman.gradle.plugins:$module:$shadowVersion"
+    }
+
+    downloadTaskVersion = "3.3.0"
+    downloadTaskJVM = { module ->
+        "de.undercouch:$module:$downloadTaskVersion"
+    }
 }
 
 apply from: "$rootDir/resources/scapesenginemodulekotlinjvmnotest.gradle"
@@ -78,7 +87,9 @@ group = "com.github.Tobi29"
 
 dependencies {
     compile gskp.gradleKotlinDsl(project)
-    compile rootProject.ext.scapesEngineIOUtilsJVM
-    compile rootProject.ext.shadow
-    compile rootProject.ext.downloadTask
+    compile rootProject.ext.scapesEngineJVM("STDEx")
+    compile rootProject.ext.scapesEngineJVM("Base64")
+    compile rootProject.ext.scapesEngineJVM("IOUtils")
+    compile rootProject.ext.shadowJVM("shadow")
+    compile rootProject.ext.downloadTaskJVM("gradle-download-task")
 }

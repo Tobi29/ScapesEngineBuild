@@ -20,13 +20,14 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.setValue
+import org.tobi29.io.BufferedWriteChannelStream
+import org.tobi29.io.tag.MutableTagMap
+import org.tobi29.io.tag.json.writeJSON
+import org.tobi29.io.tag.mapMut
+import org.tobi29.io.tag.toTag
+import org.tobi29.io.toChannel
+import org.tobi29.io.use
 import org.tobi29.scapes.engine.gradle.property
-import org.tobi29.scapes.engine.utils.io.BufferedWriteChannelStream
-import org.tobi29.scapes.engine.utils.io.tag.json.writeJSON
-import org.tobi29.scapes.engine.utils.io.toChannel
-import org.tobi29.scapes.engine.utils.tag.MutableTagMap
-import org.tobi29.scapes.engine.utils.tag.mapMut
-import org.tobi29.scapes.engine.utils.tag.toTag
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
@@ -75,6 +76,13 @@ open class NpmConfigTask : DefaultTask() {
             else config["dependencies"] = value
         }
 
+    var scripts: MutableTagMap
+        get() = config.mapMut("scripts")
+        set(value) {
+            if (value == null) config.remove("scripts")
+            else config["scripts"] = value
+        }
+
     @JvmOverloads
     fun dependency(name: String,
                    version: String = "*") {
@@ -92,6 +100,11 @@ open class NpmConfigTask : DefaultTask() {
     fun devDependency(name: String,
                       version: String = "*") {
         devDependencies[name] = version.toTag()
+    }
+
+    fun script(name: String,
+               command: String) {
+        scripts[name] = command.toTag()
     }
 
     @TaskAction

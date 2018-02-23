@@ -21,8 +21,8 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.setValue
+import org.tobi29.base64.toBase64
 import org.tobi29.scapes.engine.gradle.property
-import org.tobi29.scapes.engine.utils.toBase64
 import java.io.File
 
 open class Base64Embedder : DefaultTask() {
@@ -54,10 +54,10 @@ open class Base64Embedder : DefaultTask() {
         }.printWriter().use { writer ->
             writer.print("""package $codePackage
 
-import org.tobi29.scapes.engine.utils.fromBase64
-import org.tobi29.scapes.engine.utils.io.HeapResource
-import org.tobi29.scapes.engine.utils.io.ro
-import org.tobi29.scapes.engine.utils.io.view
+import org.tobi29.base64.fromBase64
+import org.tobi29.io.HeapResource
+import org.tobi29.io.ro
+import org.tobi29.io.view
 
 val $codeName by lazy {
     HeapResource(
