@@ -90,6 +90,7 @@ dependencies {
     compile rootProject.ext.scapesEngineJVM("STDEx")
     compile rootProject.ext.scapesEngineJVM("Base64")
     compile rootProject.ext.scapesEngineJVM("IOUtils")
+    compile rootProject.ext.scapesEngineJVM("ShaderCLike")
     compile rootProject.ext.shadowJVM("shadow")
     compile rootProject.ext.downloadTaskJVM("gradle-download-task")
 }
