@@ -35,27 +35,33 @@ import java.io.File
 open class ScapesEngineApplicationWindows : Plugin<Project> {
     override fun apply(target: Project) {
         val config = target.extensions.getByType(
-                ScapesEngineApplicationExtension::class.java)
+            ScapesEngineApplicationExtension::class.java
+        )
 
         // Platform deploy task
         val deployWindowsTasks = target.addDeployWindowsTasks(
-                target.providers.provider {
-                    target.allCommonJars()
-                }, target.providers.provider {
-            target.configurations.getByName("runtimeWindows32")
-        }, target.providers.provider {
-            target.configurations.getByName("runtimeWindows64")
-        }, target.providers.provider {
-            target.configurations.getByName("nativesWindows32")
-        }, target.providers.provider {
-            target.configurations.getByName("nativesWindows64")
-        }, config)
+            target.providers.provider {
+                target.allCommonJars()
+            }, target.providers.provider {
+                target.configurations.getByName("runtimeWindows32")
+            }, target.providers.provider {
+                target.configurations.getByName("runtimeWindows64")
+            }, target.providers.provider {
+                target.configurations.getByName("nativesWindows32")
+            }, target.providers.provider {
+                target.configurations.getByName("nativesWindows64")
+            }, config
+        )
 
         // Fat jar tasks
-        val fatJarWindows32Task = target.addShadowTask("Windows32",
-                "fatJarWindows32")
-        val fatJarWindows64Task = target.addShadowTask("Windows64",
-                "fatJarWindows64")
+        val fatJarWindows32Task = target.addShadowTask(
+            "Windows32",
+            "fatJarWindows32"
+        )
+        val fatJarWindows64Task = target.addShadowTask(
+            "Windows64",
+            "fatJarWindows64"
+        )
 
         // Full deploy task
         target.tasks.findByName("deploy")?.let { deployTask ->
@@ -68,61 +74,74 @@ open class ScapesEngineApplicationWindows : Plugin<Project> {
     }
 }
 
-fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
-                                  jars32: Provider<FileCollection>,
-                                  jars64: Provider<FileCollection>,
-                                  natives32: Provider<FileCollection>,
-                                  natives64: Provider<FileCollection>,
-                                  config: ScapesEngineApplicationExtension): List<Task> {
+fun Project.addDeployWindowsTasks(
+    jars: Provider<FileCollection>,
+    jars32: Provider<FileCollection>,
+    jars64: Provider<FileCollection>,
+    natives32: Provider<FileCollection>,
+    natives64: Provider<FileCollection>,
+    config: ScapesEngineApplicationExtension
+): List<Task> {
     val deployTasks = ArrayList<Task>()
 
     // JRE Task 32-Bit
     val (jreTask32, jre32) = ojdkBuildWindows(
-            config.ojdkBuildVersionProvider, "32")
+        config.ojdkBuildVersionProvider, "32"
+    )
 
     // JRE Task 64-Bit
     // TODO: AdoptOpenJDK does not include a proper cacerts file on windows
     // val (jreTask64, jre64) = adoptOpenJDKWindows(
     //         config.adoptOpenJDKVersionProvider, "64")
     val (jreTask64, jre64) = ojdkBuildWindows(
-            config.ojdkBuildVersionProvider, "64")
+        config.ojdkBuildVersionProvider, "64"
+    )
 
     // Program manifest extract task
     val programManifestExtractTask = task<ClasspathExtractTask>(
-            "programManifestExtractWindows") {
+        "programManifestExtractWindows"
+    ) {
         resourcePath = "Launch4j/Program.manifest"
         output = temporaryDir.resolve("Program.manifest")
     }
 
     // Inno setup script extract task
     val innoSetupScriptExtractTask = task<ClasspathExtractTask>(
-            "innoSetupScriptExtractWindows") {
+        "innoSetupScriptExtractWindows"
+    ) {
         resourcePath = "InnoSetup/Setup.iss"
         output = temporaryDir.resolve("Setup.iss")
     }
 
     // Program task
-    val programTask = windowsProgramTask(false,
-            config.nameProvider.map { "$it.exe" }, config,
-            config.workingDirectoryInLibraryProvider,
-            programManifestExtractTask.outputProvider,
-            "programWindows")
+    val programTask = windowsProgramTask(
+        false,
+        config.nameProvider.map { "$it.exe" }, config,
+        config.workingDirectoryInLibraryProvider,
+        programManifestExtractTask.outputProvider,
+        "programWindows"
+    )
     programTask.dependsOn(programManifestExtractTask)
 
     // Command task
-    val programCmdTask = windowsProgramTask(true,
-            config.nameProvider.map { "${it}Cmd.exe" }, config,
-            config.workingDirectoryInLibraryProvider,
-            programManifestExtractTask.outputProvider,
-            "programCmdWindows")
+    val programCmdTask = windowsProgramTask(
+        true,
+        config.nameProvider.map { "${it}Cmd.exe" }, config,
+        config.workingDirectoryInLibraryProvider,
+        programManifestExtractTask.outputProvider,
+        "programCmdWindows"
+    )
     programCmdTask.dependsOn(programManifestExtractTask)
 
     // Zip tasks
     val deployWindowsZip32 = windowsZipTask(
-            map(jars, jars32) { a, b -> a + b }, natives32,
-            map(programTask.outputProvider,
-                    programCmdTask.outputProvider) { a, b -> files(a, b) },
-            jre32, "deployWindowsZip32")
+        map(jars, jars32) { a, b -> a + b }, natives32,
+        map(
+            programTask.outputProvider,
+            programCmdTask.outputProvider
+        ) { a, b -> files(a, b) },
+        jre32, "deployWindowsZip32"
+    )
     deployWindowsZip32.dependsOn(jreTask32)
     deployWindowsZip32.dependsOn("jar")
     deployWindowsZip32.dependsOn(programTask)
@@ -135,10 +154,13 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
     deployTasks.add(deployWindowsZip32)
 
     val deployWindowsZip64 = windowsZipTask(
-            map(jars, jars64) { a, b -> a + b }, natives64,
-            map(programTask.outputProvider,
-                    programCmdTask.outputProvider) { a, b -> files(a, b) },
-            jre64, "deployWindowsZip64")
+        map(jars, jars64) { a, b -> a + b }, natives64,
+        map(
+            programTask.outputProvider,
+            programCmdTask.outputProvider
+        ) { a, b -> files(a, b) },
+        jre64, "deployWindowsZip64"
+    )
     deployWindowsZip64.dependsOn(jreTask64)
     deployWindowsZip64.dependsOn("jar")
     deployWindowsZip64.dependsOn(programTask)
@@ -151,9 +173,11 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
     deployTasks.add(deployWindowsZip64)
 
     // Prepare task
-    val prepareTask = windowsPrepareTask(jars, jars32, jars64, natives32,
-            natives64, jre32, jre64, innoSetupScriptExtractTask.outputProvider,
-            "prepareWindows")
+    val prepareTask = windowsPrepareTask(
+        jars, jars32, jars64, natives32,
+        natives64, jre32, jre64, innoSetupScriptExtractTask.outputProvider,
+        "prepareWindows"
+    )
     prepareTask.dependsOn(jreTask32)
     prepareTask.dependsOn(jreTask64)
     prepareTask.dependsOn(innoSetupScriptExtractTask)
@@ -175,8 +199,9 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
 
     // Pack task
     val packTask = windowsPackTask(
-            providers.provider(prepareTask.temporaryDir),
-            innoEXE, config, "packWindows")
+        providers.provider(prepareTask.temporaryDir),
+        innoEXE, config, "packWindows"
+    )
     packTask.dependsOn(prepareTask)
 
     // Main task
@@ -193,12 +218,14 @@ fun Project.addDeployWindowsTasks(jars: Provider<FileCollection>,
     return deployTasks
 }
 
-fun Project.windowsProgramTask(cmd: Boolean,
-                               exeName: Provider<String>,
-                               config: ScapesEngineApplicationExtension,
-                               workingDirInLibrary: Provider<Boolean>,
-                               manifest: Provider<File>,
-                               taskName: String): Launch4jTask {
+fun Project.windowsProgramTask(
+    cmd: Boolean,
+    exeName: Provider<String>,
+    config: ScapesEngineApplicationExtension,
+    workingDirInLibrary: Provider<Boolean>,
+    manifest: Provider<File>,
+    taskName: String
+): Launch4jTask {
     val task = tasks.create(taskName, Launch4jTask::class.java)
     task.fullNameProvider.set(config.fullNameProvider)
     task.versionProvider.set(config.versionProvider)
@@ -216,15 +243,17 @@ fun Project.windowsProgramTask(cmd: Boolean,
     return task
 }
 
-fun Project.windowsPrepareTask(jars: Provider<FileCollection>,
-                               jars32: Provider<FileCollection>,
-                               jars64: Provider<FileCollection>,
-                               natives32: Provider<FileCollection>,
-                               natives64: Provider<FileCollection>,
-                               jre32: Provider<File>,
-                               jre64: Provider<File>,
-                               iss: Provider<File>,
-                               taskName: String): Copy {
+fun Project.windowsPrepareTask(
+    jars: Provider<FileCollection>,
+    jars32: Provider<FileCollection>,
+    jars64: Provider<FileCollection>,
+    natives32: Provider<FileCollection>,
+    natives64: Provider<FileCollection>,
+    jre32: Provider<File>,
+    jre64: Provider<File>,
+    iss: Provider<File>,
+    taskName: String
+): Copy {
     val task = tasks.create(taskName, Copy::class.java)
     task.from(iss.toClosure())
     task.from(file("project/installer"))
@@ -262,11 +291,13 @@ fun Project.windowsPrepareTask(jars: Provider<FileCollection>,
     return task
 }
 
-fun Project.windowsZipTask(jars: Provider<FileCollection>,
-                           natives: Provider<FileCollection>,
-                           exes: Provider<FileCollection>,
-                           jre: Provider<File>,
-                           taskName: String): Zip {
+fun Project.windowsZipTask(
+    jars: Provider<FileCollection>,
+    natives: Provider<FileCollection>,
+    exes: Provider<FileCollection>,
+    jre: Provider<File>,
+    taskName: String
+): Zip {
     val task = tasks.create(taskName, Zip::class.java)
     task.from(jars.toClosure()) { it.into("lib") }
     task.from(natives.map { fetchNativesWindows(it) }.toClosure()) {
@@ -280,26 +311,29 @@ fun Project.windowsZipTask(jars: Provider<FileCollection>,
     return task
 }
 
-fun Project.windowsPackTask(dir: Provider<File>,
-                            innoEXE: File,
-                            config: ScapesEngineApplicationExtension,
-                            taskName: String): Exec {
+fun Project.windowsPackTask(
+    dir: Provider<File>,
+    innoEXE: File,
+    config: ScapesEngineApplicationExtension,
+    taskName: String
+): Exec {
     val task = tasks.create(taskName, Exec::class.java)
-    val innoArgs = arrayOf(
-            config.fullNameProvider.map { "/DApplicationFullName=$it" }.lazyString(),
-            config.versionProvider.map { "/DApplicationVersion=$it" }.lazyString(),
-            config.companyProvider.map { "/DApplicationCompany=$it" }.lazyString(),
-            config.copyrightProvider.map { "/DApplicationCopyright=$it" }.lazyString(),
-            config.urlProvider.map { "/DApplicationURL=$it" }.lazyString(),
-            config.uuidProvider.map { "/DApplicationUUID=$it" }.lazyString(),
-            config.nameProvider.map { "/DApplicationName=$it" }.lazyString())
-    val commandLine = arrayOf(innoEXE.absolutePath, *innoArgs, "Setup.iss")
-    if (System.getProperty("os.name").toLowerCase().contains("win")) {
-        task.commandLine(*commandLine)
-    } else {
-        task.commandLine("wine", *commandLine)
-    }
     afterEvaluate {
+        val innoArgs = arrayOf(
+            config.fullNameProvider.map { "/DApplicationFullName=$it" }.get(),
+            config.versionProvider.map { "/DApplicationVersion=$it" }.get(),
+            config.companyProvider.map { "/DApplicationCompany=$it" }.get(),
+            config.copyrightProvider.map { "/DApplicationCopyright=$it" }.get(),
+            config.urlProvider.map { "/DApplicationURL=$it" }.get(),
+            config.uuidProvider.map { "/DApplicationUUID=$it" }.get(),
+            config.nameProvider.map { "/DApplicationName=$it" }.get()
+        )
+        val commandLine = arrayOf(innoEXE.absolutePath, *innoArgs, "Setup.iss")
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            task.commandLine(*commandLine)
+        } else {
+            task.commandLine("wine", *commandLine)
+        }
         task.workingDir = dir.get()
     }
     return task
