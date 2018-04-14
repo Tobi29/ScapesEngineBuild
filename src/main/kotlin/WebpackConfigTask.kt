@@ -35,6 +35,7 @@ var path = require("path");
 
 var config = {
     output: {},
+    mode: "production",
     module: {rules: []},
     resolve: {modules: []},
     plugins: [],
@@ -46,7 +47,7 @@ module.exports = config;
     }
 
     fun entry(path: String) {
-        configMut.append("""
+        append("""
 config.entry = "$path";
 """)
     }
@@ -56,24 +57,36 @@ config.entry = "$path";
                filename: String? = "[name].bundle.js",
                chunkFilename: String? = "[id].bundle.js") {
         path?.let {
-            configMut.append("""
+            append("""
 config.output.path = path.resolve(__dirname, "$it");
 """)
         }
         filename?.let {
-            configMut.append("""
+            append("""
 config.output.filename = "$it";
 """)
         }
         chunkFilename?.let {
-            configMut.append("""
+            append("""
 config.output.chunkFilename = "$it";
 """)
         }
     }
 
+    fun mode(value:String) {
+        append("""
+config.mode = "$value";
+""")
+    }
+
+    fun devtool(value: String?) {
+        append("""
+config.devtool = ${if (value == null) "false" else "\"$value\""};
+""")
+    }
+
     fun resolvePath(path: String) {
-        configMut.append("""
+        append("""
 config.resolve.modules.push(path.resolve(__dirname, "$path"));
 """)
     }
@@ -84,16 +97,16 @@ config.resolve.modules.push(path.resolve(__dirname, "$path"));
                    options: String = "{}",
                    include: String? = null,
                    exclude: String? = null) {
-        configMut.append("""
+        append("""
 config.module.rules.push({
     test: /$test/""")
         include?.let {
-            configMut.append(",\n    include: /$it/,")
+            append(",\n    include: /$it/,")
         }
         exclude?.let {
-            configMut.append(",\n    include: /$it/,")
+            append(",\n    include: /$it/,")
         }
-        configMut.append("""
+        append("""
     use: {
         loader: "$loader",
         options: $options
@@ -103,23 +116,27 @@ config.module.rules.push({
     }
 
     fun plugin(plugin: String) {
-        configMut.append("""
+        append("""
 config.plugins.push($plugin);
 """)
     }
 
     fun node(module: String,
              mode: Boolean) {
-        configMut.append("""
+        append("""
 config.node.$module = $mode;
 """)
     }
 
     fun node(module: String,
              mode: String) {
-        configMut.append("""
+        append("""
 config.node.$module = "$mode";
 """)
+    }
+
+    fun append(str: String) {
+        configMut.append(str)
     }
 
     val config @Input get() = configMut.toString()
