@@ -17,8 +17,8 @@
 import org.gradle.kotlin.dsl.ProjectExtensionsKt as gskp
 
 buildscript {
-    def kotlinVersion = "1.2.21"
-    def dokkaVersion = "0.9.15"
+    def kotlinVersion = "1.2.40"
+    def dokkaVersion = "0.9.16"
 
     repositories {
         jcenter()
@@ -37,12 +37,6 @@ buildscript {
 }
 
 allprojects {
-    def env = System.getenv()
-    if (env.containsKey("VERSION")) {
-        version = env["VERSION"]
-    } else {
-        version = findProperty("build.version")
-    }
     group = "com.github.Tobi29.ScapesEngineBuild"
 
     repositories {
@@ -57,40 +51,41 @@ allprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.4.1"
+    gradleVersion = "4.6"
     distributionUrl =
             "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
 
 ext {
+    downloadTaskVersion = "3.3.0"
+    downloadTaskJVM = { module -> "de.undercouch:$module:$downloadTaskVersion" }
 
-    scapesEngineVersion = "0.0.12"
-    scapesEngine = { module ->
-        "com.github.Tobi29.ScapesEngine:$module:$scapesEngineVersion"
+    junitJupiterVersion = "5.1.1"
+    junitJupiterJVM =
+            { module -> "org.junit.jupiter:$module:$junitJupiterVersion" }
+
+    scapesEngineVersion = "0.0.13"
+    scapesEngine = {
+        module -> "com.github.Tobi29.ScapesEngine:$module:$scapesEngineVersion"
     }
-    scapesEngineJVM = { module -> scapesEngine("${module}JVM") }
+    scapesEngineJVM = { module -> scapesEngine("${module}-jvm") }
 
     shadowVersion = "2.0.1"
-    shadowJVM = { module ->
-        "com.github.jengelman.gradle.plugins:$module:$shadowVersion"
-    }
-
-    downloadTaskVersion = "3.3.0"
-    downloadTaskJVM = { module ->
-        "de.undercouch:$module:$downloadTaskVersion"
+    shadowJVM = {
+        module -> "com.github.jengelman.gradle.plugins:$module:$shadowVersion"
     }
 }
 
-apply from: "$rootDir/resources/scapesenginemodulekotlinjvmnotest.gradle"
+apply from: "$rootDir/resources/modulekotlinjvm.gradle"
 
 group = "com.github.Tobi29"
 
 dependencies {
     compile gskp.gradleKotlinDsl(project)
-    compile rootProject.ext.scapesEngineJVM("STDEx")
-    compile rootProject.ext.scapesEngineJVM("Base64")
-    compile rootProject.ext.scapesEngineJVM("IOUtils")
-    compile rootProject.ext.scapesEngineJVM("ShaderCLike")
+    compile rootProject.ext.scapesEngineJVM("stdex")
+    compile rootProject.ext.scapesEngineJVM("base64")
+    compile rootProject.ext.scapesEngineJVM("io")
+    compile rootProject.ext.scapesEngineJVM("shader-clike")
     compile rootProject.ext.shadowJVM("shadow")
     compile rootProject.ext.downloadTaskJVM("gradle-download-task")
 }

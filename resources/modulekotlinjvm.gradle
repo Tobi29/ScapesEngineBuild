@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 Tobi29
+ * Copyright 2012-2018 Tobi29
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 apply plugin: "kotlin-platform-jvm"
-apply plugin: "maven"
+apply from: "$rootDir/resources/modulemaven.gradle"
 apply plugin: "org.jetbrains.dokka"
 apply plugin: "eclipse"
 
@@ -25,26 +25,17 @@ kotlin {
     }
 }
 
-task sourcesJar(type: Jar) {
-    classifier = "sources"
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar
-}
-
-task printClasspath {
-    doLast {
-        println(sourceSets.getByName("main").runtimeClasspath.asPath)
+test {
+    useJUnitPlatform {
+        includeEngines "spek"
     }
 }
 
-ext.implementCommon = { Project project ->
-    dependencies.implement project
-    dependencies.compileOnly project
-    dependencies.testCompileOnly project
-    tasks.sourcesJar.from project.sourceSets.main.allSource
+dependencies {
+    testCompile rootProject.ext.scapesEngineJVM("test-assertions")
+
+    // Crashes without this
+    testRuntime rootProject.ext.junitJupiterJVM("junit-jupiter-engine")
 }
 
 eclipse.project {
