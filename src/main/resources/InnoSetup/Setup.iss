@@ -11,6 +11,7 @@ AppUpdatesURL={#ApplicationURL}
 SetupIconFile=IconSetup.ico
 WizardImageFile=Image.bmp
 WizardSmallImageFile=SmallImage.bmp
+WizardImageAlphaFormat=defined
 UninstallDisplayIcon={app}\{#ApplicationName}.exe
 
 DefaultDirName={pf}\{#ApplicationFullName}
