@@ -39,7 +39,8 @@ open class NpmConfigTask : DefaultTask() {
         @OutputFile get
 
     val config = MutableTagMap()
-    @Input internal fun configStr() = config.toString()
+    @Input
+    internal fun configStr() = config.toString()
 
     var pkgName: String?
         get() = config["name"]?.toString()
@@ -84,8 +85,10 @@ open class NpmConfigTask : DefaultTask() {
         }
 
     @JvmOverloads
-    fun dependency(name: String,
-                   version: String = "*") {
+    fun dependency(
+        name: String,
+        version: String = "*"
+    ) {
         dependencies[name] = version.toTag()
     }
 
@@ -97,22 +100,28 @@ open class NpmConfigTask : DefaultTask() {
         }
 
     @JvmOverloads
-    fun devDependency(name: String,
-                      version: String = "*") {
+    fun devDependency(
+        name: String,
+        version: String = "*"
+    ) {
         devDependencies[name] = version.toTag()
     }
 
-    fun script(name: String,
-               command: String) {
+    fun script(
+        name: String,
+        command: String
+    ) {
         scripts[name] = command.toTag()
     }
 
     @TaskAction
     fun run() {
-        FileChannel.open(output.also {
-            it.parentFile.mkdirs()
-        }.toPath(), StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE).use { channel ->
+        FileChannel.open(
+            output.also {
+                it.parentFile.mkdirs()
+            }.toPath(), StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE
+        ).use { channel ->
             val stream = BufferedWriteChannelStream(channel.toChannel())
             config.toTag().writeJSON(stream)
             stream.flush()

@@ -47,7 +47,7 @@ open class StartupScriptTask : DefaultTask() {
         @Input get
 
     val workingDirInLibraryProvider = project.property<Boolean>()
-            .apply { set(false) }
+        .apply { set(false) }
 
     var workingDirInLibrary by workingDirInLibraryProvider
         @Input get
@@ -63,7 +63,8 @@ open class StartupScriptTask : DefaultTask() {
             }
             writer.println("export CLASSPATH=\"$libPath/*\"")
             writer.println(
-                    "exec -a $execName java -Djava.library.path=$libPath $mainClass \$@")
+                "exec -a $execName java -Djava.library.path=$libPath $mainClass \$@"
+            )
         }
     }
 }

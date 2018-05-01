@@ -52,7 +52,8 @@ open class Base64Embedder : DefaultTask() {
         output.also {
             it.parentFile.mkdirs()
         }.printWriter().use { writer ->
-            writer.print("""package $codePackage
+            writer.print(
+                """package $codePackage
 
 import org.tobi29.base64.fromBase64
 import org.tobi29.io.HeapResource
@@ -64,7 +65,8 @@ val $codeName by lazy {
             ("$base64")
             .fromBase64().view.ro)
 }
-""")
+"""
+            )
         }
     }
 }

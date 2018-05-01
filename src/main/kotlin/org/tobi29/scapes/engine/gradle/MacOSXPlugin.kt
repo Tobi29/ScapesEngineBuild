@@ -36,19 +36,23 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
     @Suppress("ReplaceSingleLineLet")
     override fun apply(target: Project) {
         val config = target.extensions.getByType(
-                ScapesEngineApplicationExtension::class.java)
+            ScapesEngineApplicationExtension::class.java
+        )
 
         // Platform deploy task
         val deployMacOSXTask = target.addDeployMacOSXTask(
-                target.providers.provider {
-                    target.allJars("MacOSX")
-                }, target.providers.provider<FileCollection> {
-            target.configurations.getByName("nativesMacOSX")
-        }, config)
+            target.providers.provider {
+                target.allJars("MacOSX")
+            }, target.providers.provider<FileCollection> {
+                target.configurations.getByName("nativesMacOSX")
+            }, config
+        )
 
         // Fat jar task
-        val fatJarMacOSXTask = target.addShadowTask("MacOSX",
-                "fatJarMacOSX")
+        val fatJarMacOSXTask = target.addShadowTask(
+            "MacOSX",
+            "fatJarMacOSX"
+        )
 
         // Full deploy task
         target.tasks.findByName("deploy")?.let { deployTask ->
@@ -62,23 +66,28 @@ open class ScapesEngineApplicationMacOSX : Plugin<Project> {
     }
 }
 
-fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
-                                natives: Provider<FileCollection>,
-                                config: ScapesEngineApplicationExtension): Task? {
+fun Project.addDeployMacOSXTask(
+    jars: Provider<FileCollection>,
+    natives: Provider<FileCollection>,
+    config: ScapesEngineApplicationExtension
+): Task? {
     // JRE task
     val (jreTask, jre) = adoptOpenJDKMacOSX(
-            config.adoptOpenJDKVersionProvider)
+        config.adoptOpenJDKVersionProvider
+    )
 
     // Launcher extract task
     val launcherExtractTask = task<ClasspathExtractTask>(
-            "launcherExtractMacOSX") {
+        "launcherExtractMacOSX"
+    ) {
         resourcePath = "AppBundler/JavaAppLauncher"
         outputProvider.set(config.nameProvider.map { temporaryDir.resolve(it) })
     }
 
     // Localizable extract task
     val localizableExtractTask = task<ClasspathExtractTask>(
-            "localizableExtractMacOSX") {
+        "localizableExtractMacOSX"
+    ) {
         resourcePath = "AppBundler/Localizable.strings"
         output = temporaryDir.resolve("Localizable.strings")
     }
@@ -114,8 +123,10 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
         from(jre.toClosure()) {
             it.include("lib/jli/libjli.dylib")
             it.eachFile { fcp: FileCopyDetails ->
-                fcp.relativePath = RelativePath(true, plugInsDir.get(),
-                        "JRE.jre", "Contents", "MacOS", "libjli.dylib")
+                fcp.relativePath = RelativePath(
+                    true, plugInsDir.get(),
+                    "JRE.jre", "Contents", "MacOS", "libjli.dylib"
+                )
                 fcp.mode = 493 // 755
             }
             it.includeEmptyDirs = false
@@ -144,10 +155,13 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
         }.toClosure()) {
             it.into(resourcesDir.toClosure())
         }
-        from(map(appPListTask.plistFileProvider,
-                appPListTask.pkgFileProvider) { a, b ->
+        from(map(
+            appPListTask.plistFileProvider,
+            appPListTask.pkgFileProvider
+        ) { a, b ->
             files(a, b)
-        }.toClosure()) {
+        }.toClosure()
+        ) {
             it.into(contents.toClosure())
         }
     }
@@ -167,30 +181,31 @@ fun Project.addDeployMacOSXTask(jars: Provider<FileCollection>,
 }
 
 fun ScapesEngineApplicationExtension.generatePList() = AppPList(
-        name = name,
-        displayName = fullName,
-        executableName = name,
-        identifier = mainClass,
-        shortVersion = version,
-        mainClassName = mainClass,
-        copyright = copyright,
-        icon = "Icon.icns",
-        runtime = "JRE.jre",
-        workingDirectoryInLibrary = workingDirectoryInLibrary,
-        applicationCategory = when (category) {
-            ApplicationType.DEVELOPMENT -> "public.app-category.developer-tools"
-            ApplicationType.GAME -> "public.app-category.games"
-            ApplicationType.GRAPHICS -> "public.app-category.graphics-design"
-            ApplicationType.INTERNET -> "public.app-category.social-networking"
-            ApplicationType.MULTIMEDIA -> "public.app-category.entertainment"
-            ApplicationType.OFFICE -> "public.app-category.productivity"
-            ApplicationType.UTILITY -> "public.app-category.utilities"
-        },
-        options = listOf(
-                Option(value = "-XstartOnFirstThread"),
-                Option(value = "-Xms64M"),
-                Option(value = "-Xmx2048M"),
-                Option(value = "-XX:+UseG1GC"),
-                Option(value = "-XX:MaxGCPauseMillis=1"),
-                Option(value = "-Xdock:icon=Contents/resources/Icon.icns"))
+    name = name,
+    displayName = fullName,
+    executableName = name,
+    identifier = mainClass,
+    shortVersion = version,
+    mainClassName = mainClass,
+    copyright = copyright,
+    icon = "Icon.icns",
+    runtime = "JRE.jre",
+    workingDirectoryInLibrary = workingDirectoryInLibrary,
+    applicationCategory = when (category) {
+        ApplicationType.DEVELOPMENT -> "public.app-category.developer-tools"
+        ApplicationType.GAME -> "public.app-category.games"
+        ApplicationType.GRAPHICS -> "public.app-category.graphics-design"
+        ApplicationType.INTERNET -> "public.app-category.social-networking"
+        ApplicationType.MULTIMEDIA -> "public.app-category.entertainment"
+        ApplicationType.OFFICE -> "public.app-category.productivity"
+        ApplicationType.UTILITY -> "public.app-category.utilities"
+    },
+    options = listOf(
+        Option(value = "-XstartOnFirstThread"),
+        Option(value = "-Xms64M"),
+        Option(value = "-Xmx2048M"),
+        Option(value = "-XX:+UseG1GC"),
+        Option(value = "-XX:MaxGCPauseMillis=1"),
+        Option(value = "-Xdock:icon=Contents/resources/Icon.icns")
+    )
 )

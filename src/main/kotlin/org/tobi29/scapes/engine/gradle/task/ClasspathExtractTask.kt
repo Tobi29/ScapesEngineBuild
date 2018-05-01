@@ -29,8 +29,10 @@ open class ClasspathExtractTask : DefaultTask() {
 
     @TaskAction
     fun run() {
-        FileChannel.open(output.toPath(), StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE).use {
+        FileChannel.open(
+            output.toPath(), StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE
+        ).use {
             val stream = BufferedWriteChannelStream(it.toChannel())
             stream.put(data.view)
             stream.flush()
@@ -38,7 +40,7 @@ open class ClasspathExtractTask : DefaultTask() {
     }
 
     private fun read() =
-            ClasspathPath(this::class.java.classLoader, resourcePath).readNow {
-                it.asByteArray()
-            }
+        ClasspathPath(this::class.java.classLoader, resourcePath).readNow {
+            it.asByteArray()
+        }
 }

@@ -11,13 +11,15 @@ fun String.splitArgumentList(): List<String> {
             '\\' -> {
                 if (i + 1 >= length) {
                     throw IllegalArgumentException(
-                            "Backslash without escaped character")
+                        "Backslash without escaped character"
+                    )
                 }
                 val c1 = this[i + 1]
                 when (c1) {
                     '\\', ',' -> current.append(c1)
                     else -> throw IllegalArgumentException(
-                            "Invalid escaped character: $c1")
+                        "Invalid escaped character: $c1"
+                    )
                 }
             }
             ',' -> {
@@ -46,13 +48,15 @@ fun String.splitArgumentMap(): Map<String, String> {
             '\\' -> {
                 if (i + 1 >= length) {
                     throw IllegalArgumentException(
-                            "Backslash without escaped character")
+                        "Backslash without escaped character"
+                    )
                 }
                 val c1 = this[i + 1]
                 when (c1) {
                     '\\', ',', '=' -> current.append(c1)
                     else -> throw IllegalArgumentException(
-                            "Invalid escaped character: $c1")
+                        "Invalid escaped character: $c1"
+                    )
                 }
             }
             '=' -> if (current === currentKey) {

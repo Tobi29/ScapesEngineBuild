@@ -44,7 +44,8 @@ open class AssetBundler : DefaultTask() {
                     dir["Type"]?.toString()?.let {
                         if (it != "Directory") {
                             throw IllegalArgumentException(
-                                    "Conflicting entries")
+                                "Conflicting entries"
+                            )
                         }
                     }
                     dir = element.mapMut("Contents")
@@ -55,7 +56,7 @@ open class AssetBundler : DefaultTask() {
                 val element = dir.mapMut(segments.last())
                 element["Type"] = "File".toTag()
                 element["Contents"] = FileInputStream(f.file)
-                        .use { it.readBytes() }.toTag()
+                    .use { it.readBytes() }.toTag()
             }
 
             override fun visitDir(d: FileVisitDetails) {
@@ -66,7 +67,8 @@ open class AssetBundler : DefaultTask() {
                     dir["Type"]?.toString()?.let {
                         if (it != "Directory") {
                             throw IllegalArgumentException(
-                                    "Conflicting entries")
+                                "Conflicting entries"
+                            )
                         }
                     }
                     dir = element.mapMut("Contents")
@@ -80,10 +82,12 @@ open class AssetBundler : DefaultTask() {
             }
         })
         val bundle = bundleMut.toTag()
-        FileChannel.open(output.also {
-            it.parentFile.mkdirs()
-        }.toPath(), StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE).use { channel ->
+        FileChannel.open(
+            output.also {
+                it.parentFile.mkdirs()
+            }.toPath(), StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE
+        ).use { channel ->
             val stream = BufferedWriteChannelStream(channel.toChannel())
             bundle.writeBinary(stream, 9)
             stream.flush()

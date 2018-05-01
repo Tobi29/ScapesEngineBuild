@@ -18,7 +18,7 @@ open class JREPListTask : DefaultTask() {
         @Input get
 
     val plistFileProvider = project.property<File>()
-            .apply { set(temporaryDir.resolve("Info.plist")) }
+        .apply { set(temporaryDir.resolve("Info.plist")) }
 
     var plistFile by plistFileProvider
         @OutputFile get

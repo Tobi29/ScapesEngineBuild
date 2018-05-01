@@ -27,21 +27,24 @@ import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineExtensionExtension
 open class ScapesEngineExtensionLinux : Plugin<Project> {
     override fun apply(target: Project) {
         val config = target.extensions.getByType(
-                ScapesEngineExtensionExtension::class.java)
+            ScapesEngineExtensionExtension::class.java
+        )
 
         // Platform deploy tasks
         val deployLinuxTask32 = target.addDeployLinuxExtensionTask("32",
-                target.providers.provider {
-                    target.allJars("Linux32") - config.parent.allJars("Linux32")
-                }, target.providers.provider {
-            target.configurations.getByName("nativesLinux32")
-        }, getName(config.parentProvider), config)
+            target.providers.provider {
+                target.allJars("Linux32") - config.parent.allJars("Linux32")
+            }, target.providers.provider {
+                target.configurations.getByName("nativesLinux32")
+            }, getName(config.parentProvider), config
+        )
         val deployLinuxTask64 = target.addDeployLinuxExtensionTask("64",
-                target.providers.provider {
-                    target.allJars("Linux64") - config.parent.allJars("Linux64")
-                }, target.providers.provider {
-            target.configurations.getByName("nativesLinux64")
-        }, getName(config.parentProvider), config)
+            target.providers.provider {
+                target.allJars("Linux64") - config.parent.allJars("Linux64")
+            }, target.providers.provider {
+                target.configurations.getByName("nativesLinux64")
+            }, getName(config.parentProvider), config
+        )
 
         // Full deploy task
         val deployTask = target.tasks.getByName("deploy")
@@ -55,25 +58,30 @@ open class ScapesEngineExtensionLinux : Plugin<Project> {
 }
 
 private fun getName(
-        project: Provider<Project>
+    project: Provider<Project>
 ) = project.map { project ->
     project.extensions.findByType(
-            ScapesEngineExtensionExtension::class.java)?.let { config ->
+        ScapesEngineExtensionExtension::class.java
+    )?.let { config ->
         return@map config.name
     }
     project.extensions.findByType(
-            ScapesEngineApplicationExtension::class.java)?.let { config ->
+        ScapesEngineApplicationExtension::class.java
+    )?.let { config ->
         return@map config.name
     }
     throw IllegalArgumentException(
-            "Parent project is not extension or application")
+        "Parent project is not extension or application"
+    )
 }
 
-fun Project.addDeployLinuxExtensionTask(arch: String,
-                                        jars: Provider<FileCollection>,
-                                        natives: Provider<FileCollection>,
-                                        parentName: Provider<String>,
-                                        config: ScapesEngineExtensionExtension): Task? {
+fun Project.addDeployLinuxExtensionTask(
+    arch: String,
+    jars: Provider<FileCollection>,
+    natives: Provider<FileCollection>,
+    parentName: Provider<String>,
+    config: ScapesEngineExtensionExtension
+): Task? {
     val libPath = if (rootProject.hasProperty("libPath")) {
         rootProject.property("libPath").toString()
     } else {
@@ -82,8 +90,10 @@ fun Project.addDeployLinuxExtensionTask(arch: String,
     val libDir = parentName.map { "$libPath/${it.toLowerCase()}" }
 
     // Main task
-    val task = linuxTarTask(libDir, "Linux$arch", jars,
-            natives, config.nameProvider, "deployLinux$arch")
+    val task = linuxTarTask(
+        libDir, "Linux$arch", jars,
+        natives, config.nameProvider, "deployLinux$arch"
+    )
     task.description =
             "Contains tarball that can be extracted into root for easier package creation"
     task.group = "Deployment"

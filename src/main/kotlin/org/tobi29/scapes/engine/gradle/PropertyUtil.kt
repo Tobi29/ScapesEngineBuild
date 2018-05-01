@@ -7,28 +7,28 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 
 inline fun <reified T> Project.property(): Property<T> =
-        objects.property(T::class.java)
+    objects.property(T::class.java)
 
 inline fun <L : Any, R : Any, reified T : Any> map(
-        left: Provider<L>,
-        right: Provider<R>,
-        noinline fold: (L, R) -> T
+    left: Provider<L>,
+    right: Provider<R>,
+    noinline fold: (L, R) -> T
 ): Provider<T> = mapImpl(T::class.java, left, right, fold)
 
 // TODO: Using internal API, how resolve?
 @PublishedApi
 internal fun <L : Any, R : Any, T : Any> mapImpl(
-        type: Class<T>,
-        left: Provider<L>,
-        right: Provider<R>,
-        fold: (L, R) -> T
+    type: Class<T>,
+    left: Provider<L>,
+    right: Provider<R>,
+    fold: (L, R) -> T
 ): Provider<T> = BiTransformProvider(type, fold, left, right)
 
 fun <T> ProviderFactory.provider(value: T): Provider<T> = provider { value }
 
 fun <T> Provider<T>.lazyString(): Provider<String> = map { toString() }
 
-fun <T> Provider<T>.toClosure() = { get() }.toClosure()
+fun <T : TNN?, TNN : Any> Provider<T>.toClosure() = { get() }.toClosure<TNN>()
 
 /*
  * Copyright 2017 the original author or authors.
@@ -48,18 +48,18 @@ fun <T> Provider<T>.toClosure() = { get() }.toClosure()
 
 // Local copy of internal Gradle implementation
 private class BiTransformProvider<in L : Any, in R : Any, T : Any>(
-        private val type: Class<T>,
-        private val transformer: (L, R) -> T,
-        private val providerLeft: Provider<out L>,
-        private val providerRight: Provider<out R>
+    private val type: Class<T>,
+    private val transformer: (L, R) -> T,
+    private val providerLeft: Provider<out L>,
+    private val providerRight: Provider<out R>
 ) : AbstractProvider<T>() {
     override fun getType(): Class<T>? = type
 
     override fun isPresent(): Boolean =
-            providerLeft.isPresent && providerRight.isPresent
+        providerLeft.isPresent && providerRight.isPresent
 
     override fun get(): T =
-            map(providerLeft.get(), providerRight.get())
+        map(providerLeft.get(), providerRight.get())
 
     override fun getOrNull(): T? {
         val valueLeft = providerLeft.orNull
@@ -69,6 +69,8 @@ private class BiTransformProvider<in L : Any, in R : Any, T : Any>(
         } else null
     }
 
-    fun map(left: L,
-            right: R): T = transformer(left, right)
+    fun map(
+        left: L,
+        right: R
+    ): T = transformer(left, right)
 }

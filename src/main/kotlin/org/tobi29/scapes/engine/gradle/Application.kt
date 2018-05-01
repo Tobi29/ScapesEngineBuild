@@ -13,10 +13,13 @@ import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineApplicationExtension
 
 open class ScapesEngineApplication : Plugin<Project> {
     override fun apply(target: Project) {
-        val config = target.extensions.create("application",
-                ScapesEngineApplicationExtension::class.java, target)
+        val config = target.extensions.create(
+            "application",
+            ScapesEngineApplicationExtension::class.java, target
+        )
         val javaConvention = target.convention.getPlugin(
-                JavaPluginConvention::class.java)
+            JavaPluginConvention::class.java
+        )
 
         // Configurations
         val runtimeConfigurations = target.platformRuntimeConfigurations()
@@ -32,7 +35,8 @@ open class ScapesEngineApplication : Plugin<Project> {
                 if (it.name.endsWith(".jar")) {
                     target.zipTree(it).files.filter {
                         it.isFile && it.name.matches(
-                                "(.+)\\.(dll|so(.[0-9]+)?|jnilib|dylib)".toRegex())
+                            "(.+)\\.(dll|so(.[0-9]+)?|jnilib|dylib)".toRegex()
+                        )
                     }
                 } else {
                     listOf(it)
@@ -53,30 +57,39 @@ open class ScapesEngineApplication : Plugin<Project> {
         target.afterEvaluate {
             runTask.main = config.mainClass
             runTask.classpath = javaConvention.sourceSets
-                    .getByName("main").runtimeClasspath +
+                .getByName("main").runtimeClasspath +
                     runtimeConfigurations.platform
         }
-        runTask.jvmArgs("-Xms64M", "-Xmx2048M", "-XX:+UseG1GC",
-                "-XX:MaxGCPauseMillis=1")
+        runTask.jvmArgs(
+            "-Xms64M", "-Xmx2048M", "-XX:+UseG1GC",
+            "-XX:MaxGCPauseMillis=1"
+        )
         if (target.rootProject.hasProperty("runArgs")) {
             target.rootProject.property("runArgs")
-            runTask.args(target.rootProject.property("runArgs")
-                    .toString().splitArgumentList())
+            runTask.args(
+                target.rootProject.property("runArgs")
+                    .toString().splitArgumentList()
+            )
         }
         if (target.rootProject.hasProperty("jvmArgs")) {
-            runTask.jvmArgs(target.rootProject.property("jvmArgs")
-                    .toString().splitArgumentList())
+            runTask.jvmArgs(
+                target.rootProject.property("jvmArgs")
+                    .toString().splitArgumentList()
+            )
         }
         if (target.rootProject.hasProperty("runEnv")) {
-            runTask.environment.putAll(target.rootProject.property("runEnv")
-                    .toString().splitArgumentMap())
+            runTask.environment.putAll(
+                target.rootProject.property("runEnv")
+                    .toString().splitArgumentMap()
+            )
         }
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
             runTask.jvmArgs("-XstartOnFirstThread")
         }
         if (target.rootProject.hasProperty("runtime")) {
             runTask.jvmArgs(
-                    "-Duser.dir=${target.rootProject.property("runtime")}")
+                "-Duser.dir=${target.rootProject.property("runtime")}"
+            )
         } else {
             runTask.jvmArgs("-Duser.dir=${target.file("runtime")}")
         }
@@ -101,7 +114,7 @@ open class ScapesEngineApplication : Plugin<Project> {
 
             target.extensions.findByType(IdeaModel::class.java)?.apply {
                 module.scopes["RUNTIME"]?.get("plus")
-                        ?.add(runtimeConfigurations.platform)
+                    ?.add(runtimeConfigurations.platform)
                 module.excludeDirs = module.excludeDirs + target.file("runtime")
             }
         }

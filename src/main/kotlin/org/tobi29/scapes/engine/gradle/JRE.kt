@@ -28,105 +28,132 @@ import java.io.File
 import java.net.URL
 
 fun Project.adoptOpenJDKMacOSX(version: Provider<String>) =
-        adoptOpenJDKMacOSX(version,
-                version.map {
-                    adoptOpenJDKRelease("OpenJDK8", it, "Mac", "x64")
-                })
+    adoptOpenJDKMacOSX(version,
+        version.map {
+            adoptOpenJDKRelease("OpenJDK8", it, "Mac", "x64")
+        })
 
-fun Project.adoptOpenJDKMacOSX(version: Provider<String>,
-                               release: Provider<String>) =
-        jdk("MacOSX", release,
-                version.map { "./$it" }, "./*",
-                map(version, release) { a, b ->
-                    adoptOpenJDKURL(a, b, "tar.gz")
-                },
-                "tar.gz", { tarTree(it) }, { pruneJREMacOSX(it) })
+fun Project.adoptOpenJDKMacOSX(
+    version: Provider<String>,
+    release: Provider<String>
+) =
+    jdk("MacOSX", release,
+        version.map { "./$it" }, "./*",
+        map(version, release) { a, b ->
+            adoptOpenJDKURL(a, b, "tar.gz")
+        },
+        "tar.gz", { tarTree(it) }, { pruneJREMacOSX(it) })
 
-fun Project.adoptOpenJDKWindows(version: Provider<String>,
-                                arch: String) =
-        adoptOpenJDKWindows(version, version.map {
-            adoptOpenJDKRelease("OpenJDK8",
-                    it, "Win",
-                    when (arch) {
-                        "64" -> "x64"
-                        else -> throw IllegalArgumentException(
-                                "Invalid architecture: $arch")
-                    })
-        }, arch)
+fun Project.adoptOpenJDKWindows(
+    version: Provider<String>,
+    arch: String
+) =
+    adoptOpenJDKWindows(version, version.map {
+        adoptOpenJDKRelease(
+            "OpenJDK8",
+            it, "Win",
+            when (arch) {
+                "64" -> "x64"
+                else -> throw IllegalArgumentException(
+                    "Invalid architecture: $arch"
+                )
+            }
+        )
+    }, arch)
 
-fun Project.adoptOpenJDKWindows(version: Provider<String>,
-                                release: Provider<String>,
-                                arch: String) =
-        jdk("Windows$arch", release,
-                version.map { "./$it" }, "*",
-                map(version, release) { a, b ->
-                    adoptOpenJDKURL(a, b, "zip")
-                },
-                "zip", { zipTree(it) }, { pruneJREWindows(it) })
+fun Project.adoptOpenJDKWindows(
+    version: Provider<String>,
+    release: Provider<String>,
+    arch: String
+) =
+    jdk("Windows$arch", release,
+        version.map { "./$it" }, "*",
+        map(version, release) { a, b ->
+            adoptOpenJDKURL(a, b, "zip")
+        },
+        "zip", { zipTree(it) }, { pruneJREWindows(it) })
 
-fun adoptOpenJDKURL(version: String,
-                    release: String,
-                    extension: String) =
-        URL("https://github.com/AdoptOpenJDK/openjdk-releases/releases/download/$version/$release.$extension")
+fun adoptOpenJDKURL(
+    version: String,
+    release: String,
+    extension: String
+) =
+    URL("https://github.com/AdoptOpenJDK/openjdk-releases/releases/download/$version/$release.$extension")
 
-fun adoptOpenJDKRelease(jdk: String,
-                        version: String,
-                        platform: String,
-                        arch: String) =
-        "${jdk}_${arch}_${platform}_$version"
+fun adoptOpenJDKRelease(
+    jdk: String,
+    version: String,
+    platform: String,
+    arch: String
+) =
+    "${jdk}_${arch}_${platform}_$version"
 
 fun adoptOpenJDKPList(version: String) = JREPList(
-        name = "OpenJDK JRE 8",
-        identifier = "com.github.AdoptOpenJDK.$version.jre",
-        executableName = "libjli.dylib",
-        shortVersion = "1.8.0",
-        version = version,
-        jvmMinimumFrameworkVersion = "13.2.9",
-        jvmMinimumSystemVersion = "10.6.0",
-        jvmPlatformVersion = "1.8",
-        jvmVendor = "OpenJDK",
-        jvmVersion = version)
+    name = "OpenJDK JRE 8",
+    identifier = "com.github.AdoptOpenJDK.$version.jre",
+    executableName = "libjli.dylib",
+    shortVersion = "1.8.0",
+    version = version,
+    jvmMinimumFrameworkVersion = "13.2.9",
+    jvmMinimumSystemVersion = "10.6.0",
+    jvmPlatformVersion = "1.8",
+    jvmVendor = "OpenJDK",
+    jvmVersion = version
+)
 
-fun Project.ojdkBuildWindows(version: Provider<Pair<String, String>>,
-                             arch: String) =
-        ojdkBuildWindows(
-                version.map { it.first },
-                version.map {
-                    ojdkBuildRelease(
-                            "java-1.8.0-openjdk", it.second, "windows",
-                            when (arch) {
-                                "32" -> "x86"
-                                "64" -> "x86_64"
-                                else -> throw IllegalArgumentException(
-                                        "Invalid architecture: $arch")
-                            })
-                }, arch)
+fun Project.ojdkBuildWindows(
+    version: Provider<Pair<String, String>>,
+    arch: String
+) =
+    ojdkBuildWindows(
+        version.map { it.first },
+        version.map {
+            ojdkBuildRelease(
+                "java-1.8.0-openjdk", it.second, "windows",
+                when (arch) {
+                    "32" -> "x86"
+                    "64" -> "x86_64"
+                    else -> throw IllegalArgumentException(
+                        "Invalid architecture: $arch"
+                    )
+                }
+            )
+        }, arch
+    )
 
-fun Project.ojdkBuildWindows(version: Provider<String>,
-                             release: Provider<String>,
-                             arch: String) =
-        jdk("Windows$arch", release, release, "*",
-                map(version, release) { a, b -> ojdkBuildURL(a, b) }, "zip",
-                { zipTree(it) }, { pruneJREWindows(it) })
+fun Project.ojdkBuildWindows(
+    version: Provider<String>,
+    release: Provider<String>,
+    arch: String
+) =
+    jdk("Windows$arch", release, release, "*",
+        map(version, release) { a, b -> ojdkBuildURL(a, b) }, "zip",
+        { zipTree(it) }, { pruneJREWindows(it) })
 
-fun ojdkBuildURL(version: String,
-                 release: String) =
-        URL("https://github.com/ojdkbuild/ojdkbuild/releases/download/$version/$release.zip")
+fun ojdkBuildURL(
+    version: String,
+    release: String
+) =
+    URL("https://github.com/ojdkbuild/ojdkbuild/releases/download/$version/$release.zip")
 
-fun ojdkBuildRelease(jdk: String,
-                     version: String,
-                     platform: String,
-                     arch: String) =
-        "$jdk-$version.ojdkbuild.$platform.$arch"
+fun ojdkBuildRelease(
+    jdk: String,
+    version: String,
+    platform: String,
+    arch: String
+) =
+    "$jdk-$version.ojdkbuild.$platform.$arch"
 
-fun Project.jdk(platform: String,
-                release: Provider<String>,
-                root: Provider<String>,
-                matchRoot: String,
-                url: Provider<URL>,
-                extension: String,
-                unpackTree: Project.(File) -> FileTree,
-                postProcess: CopySpec.(String) -> Unit): Pair<Task, Provider<File>> {
+fun Project.jdk(
+    platform: String,
+    release: Provider<String>,
+    root: Provider<String>,
+    matchRoot: String,
+    url: Provider<URL>,
+    extension: String,
+    unpackTree: Project.(File) -> FileTree,
+    postProcess: CopySpec.(String) -> Unit
+): Pair<Task, Provider<File>> {
     val cacheDir = release.map { rootProject.file(".jreCache/$it") }
     val jdkFile = cacheDir.map {
         it.resolve("jdk.$extension")
@@ -139,18 +166,21 @@ fun Project.jdk(platform: String,
     }
     downloadTask.onlyIf { !jdkFile.get().exists() }
     val unpackTask = jdkUnpack("unpackJDK$platform",
-            jdkFile.map { unpackTree(this@jdk, it) }, matchRoot, unpackDir)
+        jdkFile.map { unpackTree(this@jdk, it) }, matchRoot, unpackDir
+    )
     unpackTask.postProcess("$matchRoot/jre")
     unpackTask.dependsOn(downloadTask)
     unpackTask.onlyIf { !unpackDir.get().exists() }
     return Pair(unpackTask,
-            map(unpackDir, root) { a, b -> a.resolve("$b/jre") })
+        map(unpackDir, root) { a, b -> a.resolve("$b/jre") })
 }
 
-fun Project.jdkUnpack(name: String,
-                      jreTar: Provider<FileTree>,
-                      root: String,
-                      unpackDir: Provider<File>) = task<Copy>(name) {
+fun Project.jdkUnpack(
+    name: String,
+    jreTar: Provider<FileTree>,
+    root: String,
+    unpackDir: Provider<File>
+) = task<Copy>(name) {
     from(jreTar.toClosure())
     include("$root/jre/**")
     into(unpackDir.toClosure())

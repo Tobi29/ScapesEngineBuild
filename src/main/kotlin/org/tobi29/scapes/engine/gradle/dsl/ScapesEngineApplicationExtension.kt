@@ -32,7 +32,7 @@ open class ScapesEngineApplicationExtension(target: Project) {
     var copyright by copyrightProvider
 
     val categoryProvider = target.property<ApplicationType>()
-            .apply { set(ApplicationType.UTILITY) }
+        .apply { set(ApplicationType.UTILITY) }
 
     var category by categoryProvider
 
@@ -45,17 +45,17 @@ open class ScapesEngineApplicationExtension(target: Project) {
     var mainClass by mainClassProvider
 
     val workingDirectoryInLibraryProvider = target.property<Boolean>()
-            .apply { set(false) }
+        .apply { set(false) }
 
     var workingDirectoryInLibrary by workingDirectoryInLibraryProvider
 
     val adoptOpenJDKVersionProvider = target.property<String>()
-            .apply { set("jdk8u144-b01") }
+        .apply { set("jdk8u144-b01") }
 
     var adoptOpenJDKVersion by adoptOpenJDKVersionProvider
 
     val ojdkBuildVersionProvider = target.property<Pair<String, String>>()
-            .apply { set(Pair("1.8.0.141-1", "1.8.0.141-1.b16")) }
+        .apply { set(Pair("1.8.0.141-1", "1.8.0.141-1.b16")) }
 
     var ojdkBuildVersion by ojdkBuildVersionProvider
 }

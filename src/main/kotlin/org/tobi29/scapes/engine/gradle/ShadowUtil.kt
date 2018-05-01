@@ -19,17 +19,22 @@ package org.tobi29.scapes.engine.gradle
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.Project
 
-fun Project.addShadowTask(platform: String,
-                          taskName: String): ShadowJar {
+fun Project.addShadowTask(
+    platform: String,
+    taskName: String
+): ShadowJar {
     val jarTask = tasks.findByName("jar")
     val task = tasks.create(taskName, ShadowJar::class.java)
     task.group = "Deployment"
-    task.description = "Create a fat jar containing all dependencies of this project"
+    task.description =
+            "Create a fat jar containing all dependencies of this project"
     task.classifier = "all-${platform.toLowerCase()}"
     files(jarTask).forEach { task.from(zipTree(it)) }
-    task.configurations = listOf(configurations.getByName("runtime"),
-            configurations.getByName("runtime$platform"),
-            configurations.getByName("natives$platform"))
+    task.configurations = listOf(
+        configurations.getByName("runtime"),
+        configurations.getByName("runtime$platform"),
+        configurations.getByName("natives$platform")
+    )
     task.dependsOn(jarTask)
     return task
 }

@@ -19,13 +19,13 @@ open class AppPListTask : DefaultTask() {
         @Input get
 
     val plistFileProvider = project.property<File>()
-            .apply { set(temporaryDir.resolve("Info.plist")) }
+        .apply { set(temporaryDir.resolve("Info.plist")) }
 
     var plistFile by plistFileProvider
         @OutputFile get
 
     val pkgFileProvider = project.property<File>()
-            .apply { set(temporaryDir.resolve("PkgInfo")) }
+        .apply { set(temporaryDir.resolve("PkgInfo")) }
 
     var pkgFile by pkgFileProvider
         @OutputFile get

@@ -31,91 +31,104 @@ import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamWriter
 
-data class AppPList(val name: String = "",
-                    val displayName: String? = null,
-                    val identifier: String = "",
-                    val icon: String? = null,
-                    val executableName: String = "JavaAppLauncher",
-                    val shortVersion: String = "1.0",
-                    val version: String = "1.0",
-                    val signature: String = "????",
-                    val copyright: String? = null,
-                    val workingDirectoryInLibrary: Boolean = false,
-                    val minimumSystemVersion: String? = null,
-                    val applicationCategory: String = "",
-                    val highResolutionCapable: Boolean = true,
-                    val supportsAutomaticGraphicsSwitching: Boolean = true,
-                    val hideDockIcon: Boolean = false,
-                    val mainClassName: String = "",
-                    val runtime: String,
-                    val options: List<Option> = emptyList(),
-                    val arguments: List<String> = emptyList(),
-                    val architectures: List<String> = emptyList(),
-                    val registeredProtocols: List<String> = emptyList(),
-                    val bundleDocuments: List<BundleDocument> = emptyList(),
-                    val exportedTypeDeclarations: List<TypeDeclaration> = emptyList(),
-                    val importedTypeDeclarations: List<TypeDeclaration> = emptyList(),
-                    val plistEntries: List<PListEntry> = emptyList(),
-                    val environments: List<Environment> = emptyList()) : Serializable
+data class AppPList(
+    val name: String = "",
+    val displayName: String? = null,
+    val identifier: String = "",
+    val icon: String? = null,
+    val executableName: String = "JavaAppLauncher",
+    val shortVersion: String = "1.0",
+    val version: String = "1.0",
+    val signature: String = "????",
+    val copyright: String? = null,
+    val workingDirectoryInLibrary: Boolean = false,
+    val minimumSystemVersion: String? = null,
+    val applicationCategory: String = "",
+    val highResolutionCapable: Boolean = true,
+    val supportsAutomaticGraphicsSwitching: Boolean = true,
+    val hideDockIcon: Boolean = false,
+    val mainClassName: String = "",
+    val runtime: String,
+    val options: List<Option> = emptyList(),
+    val arguments: List<String> = emptyList(),
+    val architectures: List<String> = emptyList(),
+    val registeredProtocols: List<String> = emptyList(),
+    val bundleDocuments: List<BundleDocument> = emptyList(),
+    val exportedTypeDeclarations: List<TypeDeclaration> = emptyList(),
+    val importedTypeDeclarations: List<TypeDeclaration> = emptyList(),
+    val plistEntries: List<PListEntry> = emptyList(),
+    val environments: List<Environment> = emptyList()
+) : Serializable
 
-data class JREPList(val name: String = "",
-                    val identifier: String = "",
-                    val executableName: String = "libjli.dylib",
-                    val shortVersion: String = "1.0",
-                    val version: String = "1.0",
-                    val signature: String = "????",
-                    val minimumSystemVersion: String? = null,
-                    val jvmMinimumFrameworkVersion: String,
-                    val jvmMinimumSystemVersion: String,
-                    val jvmPlatformVersion: String,
-                    val jvmVendor: String,
-                    val jvmVersion: String) : Serializable
+data class JREPList(
+    val name: String = "",
+    val identifier: String = "",
+    val executableName: String = "libjli.dylib",
+    val shortVersion: String = "1.0",
+    val version: String = "1.0",
+    val signature: String = "????",
+    val minimumSystemVersion: String? = null,
+    val jvmMinimumFrameworkVersion: String,
+    val jvmMinimumSystemVersion: String,
+    val jvmPlatformVersion: String,
+    val jvmVendor: String,
+    val jvmVersion: String
+) : Serializable
 
 data class TypeDeclaration(
-        val identifier: String,
-        val referenceUrl: String? = null,
-        val description: String? = null,
-        val icon: String? = null,
-        val conformsTo: List<String> = listOf("public.data"),
-        val osTypes: List<String>? = null,
-        val mimeTypes: List<String>? = null,
-        val extensions: List<String>? = null) : Serializable
+    val identifier: String,
+    val referenceUrl: String? = null,
+    val description: String? = null,
+    val icon: String? = null,
+    val conformsTo: List<String> = listOf("public.data"),
+    val osTypes: List<String>? = null,
+    val mimeTypes: List<String>? = null,
+    val extensions: List<String>? = null
+) : Serializable
 
 data class BundleDocument(
-        val name: String = "",
-        val role: String = "Editor",
-        val icon: String?,
-        val handlerRank: String?,
-        val extensions: List<String>? = null,
-        val contentTypes: List<String>? = null,
-        val exportableTypes: List<String>? = null,
-        val isPackage: Boolean = false) : Serializable
+    val name: String = "",
+    val role: String = "Editor",
+    val icon: String?,
+    val handlerRank: String?,
+    val extensions: List<String>? = null,
+    val contentTypes: List<String>? = null,
+    val exportableTypes: List<String>? = null,
+    val isPackage: Boolean = false
+) : Serializable
 
-data class Option(val key: String? = null,
-                  val value: String) : Serializable
+data class Option(
+    val key: String? = null,
+    val value: String
+) : Serializable
 
-data class Environment(val key: String,
-                       val value: String) : Serializable
+data class Environment(
+    val key: String,
+    val value: String
+) : Serializable
 
-data class PListEntry(val type: String,
-                      val key: String,
-                      val value: String) : Serializable
+data class PListEntry(
+    val type: String,
+    val key: String,
+    val value: String
+) : Serializable
 
 fun AppPList.writeInfoPlist(file: File) {
     writeInfoPList(file) {
         // Write bundle properties
         writeBundle(
-                name = name,
-                displayName = displayName,
-                identifier = identifier,
-                icon = icon,
-                executableName = executableName,
-                packageType = "APPL",
-                shortVersion = shortVersion,
-                version = version,
-                signature = signature,
-                copyright = copyright,
-                minimumSystemVersion = minimumSystemVersion)
+            name = name,
+            displayName = displayName,
+            identifier = identifier,
+            icon = icon,
+            executableName = executableName,
+            packageType = "APPL",
+            shortVersion = shortVersion,
+            version = version,
+            signature = signature,
+            copyright = copyright,
+            minimumSystemVersion = minimumSystemVersion
+        )
 
         // Write application properties
         writeProperty("LSApplicationCategoryType", applicationCategory)
@@ -229,14 +242,15 @@ fun JREPList.writeInfoPlist(file: File) {
     writeInfoPList(file) {
         // Write bundle properties
         writeBundle(
-                name = name,
-                identifier = identifier,
-                executableName = executableName,
-                packageType = "BNDL",
-                shortVersion = shortVersion,
-                version = version,
-                signature = signature,
-                minimumSystemVersion = minimumSystemVersion)
+            name = name,
+            identifier = identifier,
+            executableName = executableName,
+            packageType = "BNDL",
+            shortVersion = shortVersion,
+            version = version,
+            signature = signature,
+            minimumSystemVersion = minimumSystemVersion
+        )
 
         // Write jvm properties
         writeKey("JavaVM")
@@ -258,20 +272,23 @@ fun JREPList.writeInfoPlist(file: File) {
 
 fun AppPList.writePkgInfo(file: File) {
     file.writer().use { writer ->
-        writer.write("APPL" + signature)
+        writer.write("APPL$signature")
     }
 }
 
-private val PLIST_DTD = "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">"
-private val PLIST_TAG = "plist"
-private val PLIST_VERSION_ATTRIBUTE = "version"
-private val DICT_TAG = "dict"
-private val KEY_TAG = "key"
-private val ARRAY_TAG = "array"
-private val STRING_TAG = "string"
+private const val PLIST_DTD =
+    "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">"
+private const val PLIST_TAG = "plist"
+private const val PLIST_VERSION_ATTRIBUTE = "version"
+private const val DICT_TAG = "dict"
+private const val KEY_TAG = "key"
+private const val ARRAY_TAG = "array"
+private const val STRING_TAG = "string"
 
-private fun <R> writeInfoPList(file: File,
-                               contents: XMLStreamWriter.() -> R): R? {
+private fun <R> writeInfoPList(
+    file: File,
+    contents: XMLStreamWriter.() -> R
+): R? {
     val out = BufferedWriter(FileWriter(file))
     val output = XMLOutputFactory.newInstance()
 
@@ -287,7 +304,8 @@ private fun <R> writeInfoPList(file: File,
 }
 
 private fun <R> XMLStreamWriter.writeInfoPList(
-        contents: XMLStreamWriter.() -> R): R {
+    contents: XMLStreamWriter.() -> R
+): R {
     // Write XML declaration
     writeStartDocument()
     writeCharacters("\n")
@@ -323,17 +341,18 @@ private fun <R> XMLStreamWriter.writeInfoPList(
 }
 
 private fun XMLStreamWriter.writeBundle(
-        name: String,
-        displayName: String? = null,
-        identifier: String,
-        icon: String? = null,
-        executableName: String,
-        packageType: String,
-        shortVersion: String,
-        version: String,
-        signature: String,
-        copyright: String? = null,
-        minimumSystemVersion: String? = null) {
+    name: String,
+    displayName: String? = null,
+    identifier: String,
+    icon: String? = null,
+    executableName: String,
+    packageType: String,
+    shortVersion: String,
+    version: String,
+    signature: String,
+    copyright: String? = null,
+    minimumSystemVersion: String? = null
+) {
     writeProperty("CFBundleDevelopmentRegion", "English")
     writeProperty("CFBundleExecutable", executableName)
     icon?.let { writeProperty("CFBundleIconFile", it) }
@@ -358,8 +377,10 @@ private fun XMLStreamWriter.writeKey(key: String) {
     writeCharacters("\n")
 }
 
-private fun XMLStreamWriter.writeValue(type: String = STRING_TAG,
-                                       value: String) {
+private fun XMLStreamWriter.writeValue(
+    type: String = STRING_TAG,
+    value: String
+) {
     if ("boolean" == type) {
         writeBoolean("true" == value)
     } else {
@@ -382,20 +403,26 @@ private fun XMLStreamWriter.writeBoolean(value: Boolean) {
     writeCharacters("\n")
 }
 
-private fun XMLStreamWriter.writeProperty(key: String,
-                                          value: Boolean) {
+private fun XMLStreamWriter.writeProperty(
+    key: String,
+    value: Boolean
+) {
     writeKey(key)
     writeBoolean(value)
 }
 
-private fun XMLStreamWriter.writeProperty(key: String,
-                                          value: String) {
+private fun XMLStreamWriter.writeProperty(
+    key: String,
+    value: String
+) {
     writeKey(key)
     writeString(value)
 }
 
-private fun XMLStreamWriter.writeStringArray(key: String,
-                                             values: List<String>?) {
+private fun XMLStreamWriter.writeStringArray(
+    key: String,
+    values: List<String>?
+) {
     if (values != null) {
         writeKey(key)
         writeStartElement(ARRAY_TAG)

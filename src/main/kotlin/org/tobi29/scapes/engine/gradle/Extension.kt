@@ -9,10 +9,13 @@ import org.tobi29.scapes.engine.gradle.dsl.ScapesEngineExtensionExtension
 
 open class ScapesEngineExtension : Plugin<Project> {
     override fun apply(target: Project) {
-        val config = target.extensions.create("extension",
-                ScapesEngineExtensionExtension::class.java, target)
+        val config = target.extensions.create(
+            "extension",
+            ScapesEngineExtensionExtension::class.java, target
+        )
         val javaConvention = target.convention.getPlugin(
-                JavaPluginConvention::class.java)
+            JavaPluginConvention::class.java
+        )
 
         // Configurations
         val runtimeConfigurations = target.platformRuntimeConfigurations()
@@ -30,7 +33,7 @@ open class ScapesEngineExtension : Plugin<Project> {
 
             target.extensions.findByType(IdeaModel::class.java)?.apply {
                 module.scopes["RUNTIME"]?.get("plus")
-                        ?.add(runtimeConfigurations.platform)
+                    ?.add(runtimeConfigurations.platform)
                 module.excludeDirs = module.excludeDirs + target.file("runtime")
             }
         }

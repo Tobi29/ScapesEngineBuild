@@ -32,33 +32,46 @@ import java.io.File
 open class ScapesEngineApplicationLinux : Plugin<Project> {
     override fun apply(target: Project) {
         val config = target.extensions.getByType(
-                ScapesEngineApplicationExtension::class.java)
+            ScapesEngineApplicationExtension::class.java
+        )
 
         // Platform deploy tasks
         val deployLinuxTask32 = target.addDeployLinuxTask("32",
-                target.providers.provider {
-                    target.configurations.getByName("runtime") + target.files(
-                            target.tasks.getByName(
-                                    "jar")) + target.configurations.getByName(
-                            "runtimeLinux32")
-                }, target.providers.provider {
-            target.configurations.getByName("nativesLinux32")
-        }, config)
+            target.providers.provider {
+                target.configurations.getByName("runtime") + target.files(
+                    target.tasks.getByName(
+                        "jar"
+                    )
+                ) + target.configurations.getByName(
+                    "runtimeLinux32"
+                )
+            }, target.providers.provider {
+                target.configurations.getByName("nativesLinux32")
+            }, config
+        )
         val deployLinuxTask64 = target.addDeployLinuxTask("64",
-                target.providers.provider {
-                    target.configurations.getByName("runtime") + target.files(
-                            target.tasks.getByName(
-                                    "jar")) + target.configurations.getByName(
-                            "runtimeLinux64")
-                }, target.providers.provider {
-            target.configurations.getByName("nativesLinux64")
-        }, config)
+            target.providers.provider {
+                target.configurations.getByName("runtime") + target.files(
+                    target.tasks.getByName(
+                        "jar"
+                    )
+                ) + target.configurations.getByName(
+                    "runtimeLinux64"
+                )
+            }, target.providers.provider {
+                target.configurations.getByName("nativesLinux64")
+            }, config
+        )
 
         // Fat jar tasks
-        val fatJarLinux32Task = target.addShadowTask("Linux32",
-                "fatJarLinux32")
-        val fatJarLinux64Task = target.addShadowTask("Linux64",
-                "fatJarLinux64")
+        val fatJarLinux32Task = target.addShadowTask(
+            "Linux32",
+            "fatJarLinux32"
+        )
+        val fatJarLinux64Task = target.addShadowTask(
+            "Linux64",
+            "fatJarLinux64"
+        )
 
         // Full deploy task
         target.tasks.findByName("deploy")?.let { deployTask ->
@@ -76,10 +89,12 @@ open class ScapesEngineApplicationLinux : Plugin<Project> {
     }
 }
 
-fun Project.addDeployLinuxTask(arch: String,
-                               jars: Provider<FileCollection>,
-                               natives: Provider<FileCollection>,
-                               config: ScapesEngineApplicationExtension): Task? {
+fun Project.addDeployLinuxTask(
+    arch: String,
+    jars: Provider<FileCollection>,
+    natives: Provider<FileCollection>,
+    config: ScapesEngineApplicationExtension
+): Task? {
     val libPath = if (rootProject.hasProperty("libPath")) {
         rootProject.property("libPath").toString()
     } else {
@@ -93,16 +108,20 @@ fun Project.addDeployLinuxTask(arch: String,
     val libDir = config.nameProvider.map { "$libPath/${it.toLowerCase()}" }
 
     // Script task
-    val scriptTask = linuxScriptTask(libDir, config,
-            "scriptLinux$arch")
+    val scriptTask = linuxScriptTask(
+        libDir, config,
+        "scriptLinux$arch"
+    )
 
     // Main task
-    val task = linuxTarTask(libDir,
-            providers.provider(binPath), "Linux$arch", jars,
-            natives,
-            scriptTask.outputProvider,
-            config.nameProvider,
-            "deployLinux$arch")
+    val task = linuxTarTask(
+        libDir,
+        providers.provider(binPath), "Linux$arch", jars,
+        natives,
+        scriptTask.outputProvider,
+        config.nameProvider,
+        "deployLinux$arch"
+    )
     task.description =
             "Contains tarball that can be extracted into root for easier package creation"
     task.group = "Deployment"
@@ -114,20 +133,26 @@ fun Project.addDeployLinuxTask(arch: String,
     return task
 }
 
-fun Project.linuxScriptTask(libPath: Provider<String>,
-                            config: ScapesEngineApplicationExtension,
-                            taskName: String): StartupScriptTask {
-    return linuxScriptTask(libPath,
-            config.nameProvider.map { it.toLowerCase() },
-            config.mainClassProvider, taskName,
-            config.workingDirectoryInLibraryProvider)
+fun Project.linuxScriptTask(
+    libPath: Provider<String>,
+    config: ScapesEngineApplicationExtension,
+    taskName: String
+): StartupScriptTask {
+    return linuxScriptTask(
+        libPath,
+        config.nameProvider.map { it.toLowerCase() },
+        config.mainClassProvider, taskName,
+        config.workingDirectoryInLibraryProvider
+    )
 }
 
-fun Project.linuxScriptTask(libPath: Provider<String>,
-                            execName: Provider<String>,
-                            mainClass: Provider<String>,
-                            taskName: String,
-                            workingDirInLibrary: Provider<Boolean>): StartupScriptTask {
+fun Project.linuxScriptTask(
+    libPath: Provider<String>,
+    execName: Provider<String>,
+    mainClass: Provider<String>,
+    taskName: String,
+    workingDirInLibrary: Provider<Boolean>
+): StartupScriptTask {
     val task = tasks.create(taskName, StartupScriptTask::class.java)
     task.execNameProvider.set(execName)
     task.libPathProvider.set(libPath)
@@ -137,26 +162,32 @@ fun Project.linuxScriptTask(libPath: Provider<String>,
     return task
 }
 
-fun Project.linuxTarTask(libPath: Provider<String>,
-                         binPath: Provider<String>,
-                         distributionName: String,
-                         jars: Provider<FileCollection>,
-                         natives: Provider<FileCollection>,
-                         script: Provider<File>,
-                         name: Provider<String>,
-                         taskName: String): Tar {
-    val task = linuxTarTask(libPath, distributionName, jars, natives, name,
-            taskName)
+fun Project.linuxTarTask(
+    libPath: Provider<String>,
+    binPath: Provider<String>,
+    distributionName: String,
+    jars: Provider<FileCollection>,
+    natives: Provider<FileCollection>,
+    script: Provider<File>,
+    name: Provider<String>,
+    taskName: String
+): Tar {
+    val task = linuxTarTask(
+        libPath, distributionName, jars, natives, name,
+        taskName
+    )
     task.from(script.toClosure()) { it.into(binPath.toClosure()) }
     return task
 }
 
-fun Project.linuxTarTask(libPath: Provider<String>,
-                         distributionName: String,
-                         jars: Provider<FileCollection>,
-                         natives: Provider<FileCollection>,
-                         name: Provider<String>,
-                         taskName: String): Tar {
+fun Project.linuxTarTask(
+    libPath: Provider<String>,
+    distributionName: String,
+    jars: Provider<FileCollection>,
+    natives: Provider<FileCollection>,
+    name: Provider<String>,
+    taskName: String
+): Tar {
     val task = tasks.create(taskName, Tar::class.java)
     task.compression = Compression.GZIP
     task.from(jars.toClosure()) {
@@ -164,8 +195,10 @@ fun Project.linuxTarTask(libPath: Provider<String>,
     }
     task.from(natives.map { fetchNativesLinux(it) }.toClosure()) {
         it.eachFile { fcp: FileCopyDetails ->
-            fcp.relativePath = RelativePath(true,
-                    libPath.get().toString(), fcp.name)
+            fcp.relativePath = RelativePath(
+                true,
+                libPath.get().toString(), fcp.name
+            )
             fcp.mode = 493 // 755
         }
     }

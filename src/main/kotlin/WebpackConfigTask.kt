@@ -30,7 +30,8 @@ open class WebpackConfigTask : DefaultTask() {
         @OutputFile get
 
     private val configMut = StringBuilder().apply {
-        append("""var webpack = require("webpack");
+        append(
+            """var webpack = require("webpack");
 var path = require("path");
 
 var config = {
@@ -43,96 +44,123 @@ var config = {
 };
 
 module.exports = config;
-""")
+"""
+        )
     }
 
     fun entry(path: String) {
-        append("""
+        append(
+            """
 config.entry = "$path";
-""")
+"""
+        )
     }
 
     @JvmOverloads
-    fun output(path: String?,
-               filename: String? = "[name].bundle.js",
-               chunkFilename: String? = "[id].bundle.js") {
+    fun output(
+        path: String?,
+        filename: String? = "[name].bundle.js",
+        chunkFilename: String? = "[id].bundle.js"
+    ) {
         path?.let {
-            append("""
+            append(
+                """
 config.output.path = path.resolve(__dirname, "$it");
-""")
+"""
+            )
         }
         filename?.let {
-            append("""
+            append(
+                """
 config.output.filename = "$it";
-""")
+"""
+            )
         }
         chunkFilename?.let {
-            append("""
+            append(
+                """
 config.output.chunkFilename = "$it";
-""")
+"""
+            )
         }
     }
 
-    fun mode(value:String) {
-        append("""
+    fun mode(value: String) {
+        append(
+            """
 config.mode = "$value";
-""")
+"""
+        )
     }
 
     fun devtool(value: String?) {
-        append("""
+        append(
+            """
 config.devtool = ${if (value == null) "false" else "\"$value\""};
-""")
+"""
+        )
     }
 
     fun resolvePath(path: String) {
-        append("""
+        append(
+            """
 config.resolve.modules.push(path.resolve(__dirname, "$path"));
-""")
+"""
+        )
     }
 
     @JvmOverloads
-    fun moduleRule(loader: String,
-                   test: String,
-                   options: String = "{}",
-                   include: String? = null,
-                   exclude: String? = null) {
-        append("""
+    fun moduleRule(
+        loader: String,
+        test: String,
+        options: String = "{}",
+        include: String? = null,
+        exclude: String? = null
+    ) {
+        append(
+            """
 config.module.rules.push({
-    test: /$test/""")
+    test: /$test/"""
+        )
         include?.let {
             append(",\n    include: /$it/,")
         }
         exclude?.let {
             append(",\n    include: /$it/,")
         }
-        append("""
+        append(
+            """
     use: {
         loader: "$loader",
         options: $options
     }
 })
-""")
+"""
+        )
     }
 
     fun plugin(plugin: String) {
-        append("""
+        append(
+            """
 config.plugins.push($plugin);
-""")
+"""
+        )
     }
 
-    fun node(module: String,
-             mode: Boolean) {
-        append("""
+    fun node(module: String, mode: Boolean) {
+        append(
+            """
 config.node.$module = $mode;
-""")
+"""
+        )
     }
 
-    fun node(module: String,
-             mode: String) {
-        append("""
+    fun node(module: String, mode: String) {
+        append(
+            """
 config.node.$module = "$mode";
-""")
+"""
+        )
     }
 
     fun append(str: String) {

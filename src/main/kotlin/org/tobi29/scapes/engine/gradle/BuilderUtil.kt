@@ -20,31 +20,37 @@ package org.tobi29.scapes.engine.gradle
 
 import groovy.util.BuilderSupport
 
-inline operator fun BuilderSupport.invoke(method: String,
-                                          block: MutableMap<String, String>.() -> Unit) = invoke(
-        method, argMap(block))
+inline operator fun BuilderSupport.invoke(
+    method: String,
+    block: MutableMap<String, String>.() -> Unit
+) = invoke(method, argMap(block))
 
-inline operator fun BuilderSupport.invoke(method: String,
-                                          args: Map<String, String>): Any? = invokeMethod(
-        method, args)
+inline operator fun BuilderSupport.invoke(
+    method: String,
+    args: Map<String, String>
+): Any? = invokeMethod(method, args)
 
-inline operator fun BuilderSupport.invoke(method: String,
-                                          arg: String): Any? = invokeMethod(
-        method, arg)
+inline operator fun BuilderSupport.invoke(
+    method: String,
+    arg: String
+): Any? = invokeMethod(method, arg)
 
-inline operator fun BuilderSupport.invoke(method: String,
-                                          block: MutableMap<String, String>.() -> Unit,
-                                          crossinline closure: BuilderSupport.() -> Unit) = invoke(
-        method, argMap(block), closure)
+inline operator fun BuilderSupport.invoke(
+    method: String,
+    block: MutableMap<String, String>.() -> Unit,
+    crossinline closure: BuilderSupport.() -> Unit
+) = invoke(method, argMap(block), closure)
 
-inline operator fun BuilderSupport.invoke(method: String,
-                                          args: Map<String, String>,
-                                          crossinline closure: BuilderSupport.() -> Unit): Any? = invokeMethod(
-        method, listOf(args, { closure(this) }.toClosure()))
+inline operator fun BuilderSupport.invoke(
+    method: String,
+    args: Map<String, String>,
+    crossinline closure: BuilderSupport.() -> Unit
+): Any? = invokeMethod(method, listOf(args, { closure(this) }.toClosure()))
 
-inline fun argMap(block: MutableMap<String, String>.() -> Unit) = map(
-        block)
+inline fun argMap(
+    block: MutableMap<String, String>.() -> Unit
+) = map(block)
 
-inline fun <K : Any, V> map(block: MutableMap<K, V>.() -> Unit) = HashMap<K, V>().apply {
-    block(this)
-}
+inline fun <K : Any, V> map(
+    block: MutableMap<K, V>.() -> Unit
+) = HashMap<K, V>().apply { block(this) }

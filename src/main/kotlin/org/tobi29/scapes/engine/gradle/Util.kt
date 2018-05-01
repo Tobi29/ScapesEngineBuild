@@ -16,57 +16,12 @@
 
 package org.tobi29.scapes.engine.gradle
 
-import groovy.lang.Closure
+import org.gradle.kotlin.dsl.KotlinClosure0
+import org.gradle.kotlin.dsl.KotlinClosure1
+import org.gradle.kotlin.dsl.KotlinClosure2
 
-fun <R> (() -> R).toClosure() = KotlinClosure0(
-        this)
+fun <R : Any> (() -> R?).toClosure() = KotlinClosure0(this)
 
-fun <R, P0> ((P0) -> R).toClosure() = KotlinClosure1(
-        this)
+fun <R : Any, P0> ((P0) -> R?).toClosure() = KotlinClosure1(this)
 
-fun <R, P0, P1> ((P0, P1) -> R).toClosure() = KotlinClosure2(
-        this)
-
-fun <R, P0, P1, P2> ((P0, P1, P2) -> R).toClosure() = KotlinClosure3(
-        this)
-
-class KotlinClosure0<R>(val function: () -> R,
-                        owner: Any? = null,
-                        thisObject: Any? = null) : Closure<R>(owner,
-        thisObject) {
-
-    @Suppress("unused")
-    fun doCall(): R = function()
-}
-
-class KotlinClosure1<R, in P0>(val function: (P0) -> R,
-                               owner: Any? = null,
-                               thisObject: Any? = null) : Closure<R>(owner,
-        thisObject) {
-
-    @Suppress("unused")
-    fun doCall(p0: P0): R = function(p0)
-}
-
-class KotlinClosure2<R, in P0, in P1>(val function: (P0, P1) -> R,
-                                      owner: Any? = null,
-                                      thisObject: Any? = null) : Closure<R>(
-        owner,
-        thisObject) {
-
-    @Suppress("unused")
-    fun doCall(p0: P0,
-               p1: P1): R = function(p0, p1)
-}
-
-class KotlinClosure3<R, in P0, in P1, in P2>(val function: (P0, P1, P2) -> R,
-                                             owner: Any? = null,
-                                             thisObject: Any? = null) : Closure<R>(
-        owner,
-        thisObject) {
-
-    @Suppress("unused")
-    fun doCall(p0: P0,
-               p1: P1,
-               p2: P2): R = function(p0, p1, p2)
-}
+fun <R : Any, P0, P1> ((P0, P1) -> R?).toClosure() = KotlinClosure2(this)

@@ -21,22 +21,24 @@ import org.gradle.api.file.FileCollection
 import java.io.File
 
 fun Project.allJars(platform: String): FileCollection =
-        allCommonJars() + configurations.getByName("runtime$platform")
+    allCommonJars() + configurations.getByName("runtime$platform")
 
 fun Project.allCommonJars(): FileCollection =
-        configurations.getByName("runtime") + files(tasks.getByName("jar"))
+    configurations.getByName("runtime") + files(tasks.getByName("jar"))
 
 fun Project.fetchNativesLinux(jars: FileCollection) =
-        fetchNatives(jars, soRegex)
+    fetchNatives(jars, soRegex)
 
 fun Project.fetchNativesMacOSX(jars: FileCollection) =
-        fetchNatives(jars, libRegex)
+    fetchNatives(jars, libRegex)
 
 fun Project.fetchNativesWindows(jars: FileCollection) =
-        fetchNatives(jars, dllRegex)
+    fetchNatives(jars, dllRegex)
 
-fun Project.fetchNatives(jars: FileCollection,
-                         regex: Regex): FileCollection = run {
+fun Project.fetchNatives(
+    jars: FileCollection,
+    regex: Regex
+): FileCollection = run {
     files(jars.asSequence().map<File, Any> {
         if (it.name.endsWith(".jar")) {
             zipTree(it).files.asSequence().filter {
